@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-A Manifest V3 browser extension (Chrome/Edge/Brave + Firefox 128+) that turns the
+A Manifest V3 browser extension (Chrome/Edge/Brave 109+ and Firefox 115+) that turns the
 Nota Paraná **manual donation** page into a fast, layman-friendly workspace for
 registering the 44-digit access keys (*chaves de acesso*) of NFC-e (modelo 65)
 and NF-e (modelo 55) — typed or read with a handheld barcode/QR scanner.
@@ -348,7 +348,10 @@ the popup window. Same files, both contexts.
   is moved, restyled by that act, or reachable from inside it.
   - `ui.js` sets `scrollbar-width: none` on the government page's `<html>` for
     the rest of the session, because the registrar is sized to the viewport and
-    the host scrollbar would sit beside a panel that never scrolls.
+    the host scrollbar would sit beside a panel that never scrolls. On an
+    engine without the property (Chrome before 121) it appends one `<style>`
+    with `html::-webkit-scrollbar{display:none}` instead — the same exception
+    in its older spelling, not a fourth.
   - `host-page.js` hides `#main` and `#header` until we mount, restyles the
     site's own `#header` into the merged bar (see the next bullet), and restyles
     its `#footer` to 35px on one row. `#main` gets replaced by our registrar; the
@@ -2202,6 +2205,18 @@ entries are normalised on read — keep that migration path.
 
 ## Conventions
 
+- **The floors are Chrome 109 and Firefox 115, and a newer feature ships with
+  its fallback beside it.** No polyfills and no second code path: a fallback
+  sits next to the line it backs up, behind `@supports` or `CSS.supports`, so a
+  current browser never runs it. The list is the *Older browsers* table in
+  `DOCS.md`. Two things follow. **`:has()` is not free** (Firefox 121): a rule
+  naming it is dropped whole there, so never put it in a selector list with a
+  selector that must survive, and anything that has to hold without it goes
+  through `regrasPorControle` in `host-page.js` or an `@supports not
+  selector(:has(a))` block. **And host access is not guaranteed** (Firefox
+  grants it at install only from 127, and lets it be switched off in any
+  version): the popup's notice is the one surface that can say so, because
+  without the permission nothing else of ours runs.
 - **Manifest V3 only.** No MV2 syntax. Use the `NFPR.api` shim with
   `async`/`await`, never callbacks.
 - **Identifiers and user-facing strings in Portuguese; comments and docs in

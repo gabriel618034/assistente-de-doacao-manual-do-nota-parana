@@ -21,6 +21,22 @@
       </div>
     </header>
 
+    <!-- Shown by popup.js only while the browser has not granted access to the
+         site. Firefox before 127 installs an MV3 extension without it. -->
+    <div id="pop-permissao" class="pop-permissao" hidden>
+      <p>
+        O navegador ainda não permitiu que o assistente funcione no site do
+        Nota Paraná. Sem isso, a página de doação abre como sempre foi.
+      </p>
+      <button id="pop-permitir" type="button" class="nfpr-btn nfpr-btn-primary">
+        Permitir no site do Nota Paraná
+      </button>
+      <p class="pop-permissao-nota">
+        Depois de permitir, atualize a página de doação se ela já estiver
+        aberta.
+      </p>
+    </div>
+
     <p class="pop-intro">
       Selecione a entidade beneficiária e abra a página de doação manual do
       Nota Paraná. Nessa página, o assistente ocupa o lugar do formulário do

@@ -4,8 +4,9 @@ Extensão de navegador que transforma a página de **doação manual** do Nota
 Paraná em uma área de trabalho para registrar as chaves de acesso de NFC-e e
 NF-e — digitadas ou lidas com um leitor de código de barras ou de QR Code.
 
-Funciona no Chrome, no Edge e no Brave, e no Firefox 128 ou mais novo. Tudo o
-que aparece na tela está em português, em linguagem simples.
+Funciona no Chrome, no Edge e no Brave a partir da versão 109, e no Firefox
+115 ou mais novo. Tudo o que aparece na tela está em português, em linguagem
+simples.
 
 > Projeto independente, sem vínculo com o Governo do Paraná.
 
@@ -59,7 +60,9 @@ Não há nada para compilar: a pasta é a extensão.
    `manifest.json`.
 
 O Chrome mostra um aviso amarelo sobre `background.scripts`. É esperado e não
-atrapalha.
+atrapalha. Em versões anteriores à 121 o aviso é um erro e a pasta não
+carrega: gere os pacotes com `node tools/empacotar.js`, descompacte o de
+`chromium` e carregue essa pasta.
 
 ### Firefox
 
@@ -69,6 +72,10 @@ atrapalha.
    `manifest.json`.
 
 Instalada assim, a extensão sai quando o Firefox é fechado.
+
+No Firefox anterior ao 127 a extensão é instalada sem acesso ao site. Clique
+no ícone dela e em **Permitir no site do Nota Paraná**; o aviso só aparece
+quando falta essa permissão.
 
 ## Primeiro uso
 

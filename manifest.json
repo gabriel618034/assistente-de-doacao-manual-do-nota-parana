@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Assistente de Doação Manual do Nota Paraná",
   "short_name": "Assistente NFPR",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Doar notas fiscais pelo Nota Paraná ficou mais simples: digite ou use o leitor e acompanhe cada doação, nota por nota.",
   "icons": {
     "16": "icons/icon-16.png",
@@ -115,7 +115,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "assistente-doacao-manual-nfpr@gabriel618034.br",
-      "strict_min_version": "128.0",
+      "strict_min_version": "115.0",
       "data_collection_permissions": {
         "required": ["none"]
       }

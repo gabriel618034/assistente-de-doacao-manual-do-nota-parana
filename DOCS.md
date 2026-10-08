@@ -1,6 +1,6 @@
 # Assistente de Doação Manual do Nota Paraná — engineering documentation
 
-A Manifest V3 browser extension (Chrome/Edge/Brave + Firefox 128+) that turns the
+A Manifest V3 browser extension (Chrome/Edge/Brave 109+ and Firefox 115+) that turns the
 Nota Paraná **manual donation** page into a fast workspace for registering
 44-digit access keys (*chaves de acesso*) of NFC-e (Nota Fiscal de Consumidor
 Eletrônica, modelo 65) and NF-e (Nota Fiscal Eletrônica, modelo 55) — typed,
@@ -141,12 +141,20 @@ expected and harmless — Chrome ignores the key and runs the service worker
 normally; the card's **service worker** link under *Inspect views* confirms it is
 alive.
 
-### Firefox (128+)
+**Chrome before 121 refuses this folder**: there the same message is an error,
+not a warning. Load the unzipped `chromium` package from
+[Store packages](#store-packages) instead.
+
+### Firefox (115+)
 
 1. Go to `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…** and choose the `manifest.json` file.
    (Temporary add-ons are removed when Firefox closes. For a permanent install,
    the package must be signed via AMO.)
+3. **Before Firefox 127 only:** open the toolbar popup and click *Permitir no
+   site do Nota Paraná*. Those versions install an MV3 extension with its host
+   permissions switched off, so until then no content script runs. See
+   [Older browsers](#older-browsers).
 
 > One manifest serves both browsers: `background` declares `service_worker`
 > (used by Chrome ≥121, which ignores `scripts`) **and** `scripts` (used by
@@ -176,7 +184,7 @@ declaration is `"required": ["none"]` — the claim made under
 [Permissions](#permissions): nothing leaves the browser except the requests Nota
 Paraná's own page makes. `PRIVACIDADE.md` says the same to the public. If that
 ever stops being true, all three change together.
-Firefox reads the key from 140; 128–139 load the manifest regardless, and AMO's
+Firefox reads the key from 140; 115–139 load the manifest regardless, and AMO's
 validator warns that `strict_min_version` is below 140. The warning does not
 block submission, and with nothing collected there is no consent screen for
 the older versions to lack.
@@ -324,6 +332,25 @@ charity's own process.
 
 No data leaves your browser except the requests sent to Nota Paraná itself — the
 same requests the website makes.
+
+### Older browsers
+
+The floors are **Chrome 109** (the last version for Windows 7 and 8.1) and
+**Firefox 115** (the ESR those systems stay on). Nothing is polyfilled; each
+newer feature has a fallback beside the line that uses it, and a current
+browser runs none of them.
+
+| Feature | Missing in | What happens there |
+|---|---|---|
+| Host permissions granted at install | Firefox < 127 | The popup shows an amber notice with *Permitir no site do Nota Paraná*, which calls `permissions.request`. Until it is granted no content script runs, the offline redirect does not fire and the popup cannot look an entity up. The same notice appears in any Firefox where the access was switched off by hand. |
+| `:has()` | Firefox < 121 | `host-page.js` appends the three presence-keyed header rules without it at `DOMContentLoaded`, for whichever of the site's controls exist. The account pill presses without its two lines moving. The entity row's focus ring follows `:focus-within`, so it also shows after a click. |
+| `zoom` | Firefox < 126 | Below 500px the Celepar mark is halved with `transform`, from its right edge. |
+| `scrollbar-width` | Chrome < 121 | `ui.js` appends one `<style>` with `html::-webkit-scrollbar{display:none}`. |
+| `action.setBadgeTextColor` | Chrome < 110 | The badge keeps the browser's default text colour. |
+| `background.scripts` beside `service_worker` | Chrome < 121 | The repository folder does not load; the `chromium` package does. |
+
+Firefox 115 and Chrome 109 were both run by hand (2026-10-08). `smoke.js` covers
+the `:has()` fallback's choice of rules and nothing else here.
 
 ---
 
@@ -3260,7 +3287,8 @@ rest looks right is these steps.
 100. In the page's own console (not the isolated world), confirm the host
      document carries exactly our mutations and no more: `<html>` has
      `scrollbar-width: none`, there are three `<style>` elements appended to
-     `<html>` that are not the site's, `#main` holds only
+     `<html>` that are not the site's (four on Chrome before 121, the fourth
+     hiding the scrollbar), `#main` holds only
      `#nfpr-registrar-host`, and `#header` holds only its own `.logo`,
      `#system-info` and our `#nfpr-cabecalho-host`. ✅ Nothing else in the
      government DOM is ours, and nothing of theirs was moved.
@@ -3466,7 +3494,7 @@ Do **not** build:
   it is active.
 - Any donation flow other than the site's manual key entry (no XML upload).
 - Localization beyond pt-BR; theming; user-configurable timing thresholds.
-- Mobile browsers or Safari. Desktop Chrome/Edge/Brave current, Firefox ≥128.
+- Mobile browsers or Safari. Desktop Chrome/Edge/Brave ≥109, Firefox ≥115.
 - Native `alert`, `confirm`, or `prompt` anywhere, under any circumstance.
 
 ---
@@ -3546,7 +3574,8 @@ Honest limits, not bugs to be surprised by:
 - **The extension touches the government page in exactly three places** outside
   its own subtree. `ui.js` sets `scrollbar-width: none` on `<html>`, because the
   registrar is sized to the viewport and the host scrollbar would sit beside a
-  panel that never scrolls. `host-page.js` restyles the site's own `#footer` to
+  panel that never scrolls (on Chrome before 121, which lacks the property, it
+  appends `html::-webkit-scrollbar{display:none}` instead: the same mutation). `host-page.js` restyles the site's own `#footer` to
   35px on one row, because `#main` is replaced by our registrar but the footer
   below it is not, and the page ships it as a ~90px slab whose only content is a
   version string and a logo. The panel reserves that 35px when it sizes itself,
@@ -3571,11 +3600,9 @@ Honest limits, not bugs to be surprised by:
 - **The narrow-window logo needs `zoom`.** Below 500px the Celepar mark is
   halved with `zoom: .5`, which means "half of whatever the site renders it at"
   without our having to know that number. Chrome has always supported it and
-  Firefox has since 126, under the manifest floor of 128 — but it is the one
-  declaration here with a support floor rather than a guarantee. If it ever
-  fails to apply, the logo renders full size and can overlap the version string,
-  because `.logos` is positioned out of flow and the text does not reflow around
-  it. The remedy is a lower breakpoint that drops `.logos` entirely.
+  Firefox has since 126. Firefox 115–125 gets `transform: scale(.5)` from the
+  right edge under `@supports not (zoom:.5)`: the mark is drawn at half size
+  where `.logos` is pinned, and its layout box stays full size.
 - **Anything in the shadow root given a written pixel height needs
   `box-sizing: border-box` spelled out.** `all: initial` on `:host` resets it to
   `content-box`, and `border-box` is declared only under `.nfpr-settings`. This

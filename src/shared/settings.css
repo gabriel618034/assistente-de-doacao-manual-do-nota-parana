@@ -313,6 +313,16 @@
   outline: 2px solid var(--nf-blue-600);
   outline-offset: 2px;
 }
+/* Firefox before 121 has no :has() and drops the rule above, which would put
+   the keyboard back on something invisible. There the ring follows focus
+   anywhere inside the row: it also shows after a click and around a focused
+   "Remover", and that is the price of it showing at all. */
+@supports not selector(:has(a)) {
+  .nfpr-item:focus-within {
+    outline: 2px solid var(--nf-blue-600);
+    outline-offset: 2px;
+  }
+}
 .nfpr-item-ativo {
   border-color: var(--nf-blue-600);
   background: linear-gradient(180deg, var(--nf-blue-50), #fff);

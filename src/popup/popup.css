@@ -71,6 +71,37 @@ body::-webkit-scrollbar-thumb {
   opacity: 0.85;
 }
 
+/* --------------------------------------------------------------- Permission */
+/* A condition, in the amber of the registrar's condition bars: nothing is
+   lost, and one click fixes it. `[hidden]` is restated because the display
+   below would otherwise beat the attribute. */
+.pop-permissao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 18px 0;
+  padding: 13px 14px;
+  background: var(--nf-amber-bg);
+  border: 1px solid var(--nf-amber-line);
+  border-radius: var(--nf-radius-sm);
+  color: var(--nf-amber-ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.pop-permissao[hidden] {
+  display: none;
+}
+.pop-permissao p {
+  margin: 0;
+}
+.pop-permissao .nfpr-btn {
+  width: 100%;
+}
+.pop-permissao-nota {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
 /* -------------------------------------------------------------------- Intro */
 .pop-intro {
   margin: 0;

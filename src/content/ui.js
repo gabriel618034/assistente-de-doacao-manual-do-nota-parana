@@ -183,6 +183,16 @@
     // document. (The mounts above — #main's children and the header host — are
     // the other half of that exception, and are mounts rather than restyling.)
     document.documentElement.style.setProperty('scrollbar-width', 'none');
+    // The same exception in its older spelling. Chromium only learned
+    // `scrollbar-width` in 121, and the floor here is 109: there the line above
+    // does nothing and the page's scrollbar sits beside the panel. Only on an
+    // engine that lacks the property, so everywhere else the host document
+    // carries exactly what it always did.
+    if (!(root.CSS && root.CSS.supports && root.CSS.supports('scrollbar-width', 'none'))) {
+      var semBarra = document.createElement('style');
+      semBarra.textContent = 'html::-webkit-scrollbar{display:none !important}';
+      document.documentElement.appendChild(semBarra);
+    }
 
     // Now that the panel is in the document it can measure where it starts.
     requestAnimationFrame(painel.api.ajustarAltura);

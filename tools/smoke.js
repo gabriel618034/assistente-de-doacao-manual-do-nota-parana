@@ -3604,6 +3604,40 @@ marco('the alphanumeric CNPJ travels from the keyboard to the check digit');
     ok('no display is declared on .user-config-options',
       violacoes(cssHost, OPCOES_CONTA, 'display'), []);
 
+    // WITHOUT :has() (Firefox 115-120) the three rules keyed to which of their
+    // controls is present are dropped by the parser, so host-page.js writes
+    // them again, unkeyed, for the controls the header turned out to hold.
+    // Silent both ways when wrong: a blank 38px in front of the name on the
+    // duplicate-session screen, or a pill's margins taken off a page that has
+    // the pill.
+    const hostSemHas = (temHas, controles) => {
+      const m = criarMundo();
+      m.sandbox.setTimeout = noop;
+      m.sandbox.CSS = { supports: () => temHas };
+      m.sandbox.document.readyState = 'complete';
+      m.sandbox.document.querySelector = () => ({
+        querySelector: (s) => (controles.indexOf(s) !== -1 ? {} : null)
+      });
+      vm.runInContext(fs.readFileSync(path.join(raiz, 'src/content/host-page.js'), 'utf8'),
+        m.sandbox, { filename: 'src/content/host-page.js' });
+      const css = m.criados.filter((e) => e.tagName === 'STYLE').map((e) => e.textContent).join('\n');
+      const INFO_HOST = '#header #system-info #user-info';
+      return [
+        css.indexOf(INFO_HOST + ' #user-name,' + INFO_HOST + ' #user-log{margin:0 !important}') !== -1,
+        css.indexOf(INFO_HOST + '{grid-template-columns:auto !important') !== -1,
+        css.indexOf('{' + INFO_HOST + ' #user-log{display:none !important}}') !== -1
+      ];
+    };
+    ok('with :has(), host-page.js appends no unkeyed rule',
+      hostSemHas(true, []), [false, false, false]);
+    ok('without :has(), the duplicate-session header loses the pill\'s margins and the Sair column',
+      hostSemHas(false, []), [true, true, false]);
+    ok('without :has(), a header with both controls keeps them and hides the CPF when narrow',
+      hostSemHas(false, ['#user-config', '#user-logout']), [false, false, true]);
+    ok('the pill\'s own press is a rule that names no :has()',
+      regrasCss(cssHost).some((r) => r.seletores.length === 1 &&
+        r.seletores[0] === '#header #system-info #user-info #user-config:active'), true);
+
     // THE FOOTER'S HEIGHT IS PUBLISHED, NEVER RESTATED. painel.js reserves
     // exactly what host-page.js styles with; a second copy of the number is a
     // clipped footer or a gap under the panel the day the two disagree.

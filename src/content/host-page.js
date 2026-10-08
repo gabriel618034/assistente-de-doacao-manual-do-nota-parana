@@ -136,9 +136,15 @@
     // 51x47, but the site's own CSS sizes .photo and nothing here has looked at
     // it, so a pixel value would be half of a guess. `transform: scale(.5)` is
     // the wrong tool: it leaves the layout box full size, which is the one
-    // thing that has to shrink. Chrome has always had zoom; Firefox since 126,
-    // and the manifest floor is 128.
-    '@media (max-width:500px){#footer #footer-info .logos img{zoom:.5 !important}}'
+    // thing that has to shrink. Chrome has always had zoom; Firefox since 126.
+    '@media (max-width:500px){#footer #footer-info .logos img{zoom:.5 !important}}',
+    // FIREFOX 115-125 HAS NO `zoom`, and the manifest floor is 115. There the
+    // wrong tool is the only one: the mark is drawn at half size from its right
+    // edge, where .logos is pinned, and its layout box stays full size. Nothing
+    // overlaps the version string either way; what is lost is the room the box
+    // would have given back.
+    '@supports not (zoom:.5){@media (max-width:500px){#footer #footer-info .logos img{',
+    'transform:scale(.5) !important;transform-origin:right center !important}}}'
   ].join('');
   document.documentElement.appendChild(rodape);
 
@@ -181,6 +187,29 @@
         '<path d="M6.2 19.2a6.5 6.5 0 0 1 11.6 0"/></svg>'
     ) +
     '")';
+
+  // THE THREE RULES THAT DEPEND ON WHICH OF THEIR CONTROLS IS PRESENT, built
+  // from the selector that says so. With `:has()` that selector is written once
+  // and holds from first paint. Firefox before 121 has no `:has()` (the manifest
+  // floor is 115) and drops any rule that names it, so there the same three are
+  // written again without it, by semHas at the bottom of this file, once the
+  // header exists to be looked at. One builder so the two spellings cannot
+  // drift.
+  var INFO = '#header #system-info #user-info';
+  function regrasPorControle(semConfig, semSair, comConfig) {
+    return {
+      semConfig:
+        semConfig + ' #user-name,' + semConfig + ' #user-log{margin:0 !important}',
+      semSair: semSair + '{grid-template-columns:auto !important;column-gap:0 !important}',
+      cpfEstreito:
+        '@media (max-width:359px){' + comConfig + ' #user-log{display:none !important}}'
+    };
+  }
+  var COM_HAS = regrasPorControle(
+    INFO + ':not(:has(#user-config))',
+    INFO + ':not(:has(#user-logout))',
+    INFO + ':has(#user-config)'
+  );
 
   var cabecalho = document.createElement('style');
   cabecalho.textContent = [
@@ -348,11 +377,8 @@
     // not be dressed as a pill, because a pill in this bar means "click me"
     // and there is nothing to click. `:has()` rather than a script for the
     // same reason as `:first-child` above: it holds from first paint.
-    '#header #system-info #user-info:not(:has(#user-config)) #user-name,',
-    '#header #system-info #user-info:not(:has(#user-config)) #user-log{',
-    'margin:0 !important}',
-    '#header #system-info #user-info:not(:has(#user-logout)){',
-    'grid-template-columns:auto !important;column-gap:0 !important}',
+    COM_HAS.semConfig,
+    COM_HAS.semSair,
     '#header #system-info #user-info .user-info-options{',
     'display:contents !important;float:none !important}',
     // THE PILL. It sits under the two lines and stretches to their column; its
@@ -387,8 +413,12 @@
     'outline:2px solid #fff !important;outline-offset:2px !important}',
     // The press, as the chip does it. The two lines are separate grid items
     // painted over the anchor rather than inside it, so they only move with
-    // it because :has() says so.
-    '#header #system-info #user-info #user-config:active,',
+    // it because :has() says so. TWO RULES, not one selector list: a browser
+    // without :has() drops the whole rule that names it, and the pill's own
+    // press would go with it. There the pill presses and the two lines stay
+    // put, a pixel apart for as long as the button is held.
+    '#header #system-info #user-info #user-config:active{',
+    'transform:translateY(1px) !important}',
     '#header #system-info #user-info:has(#user-config:active) #user-name,',
     '#header #system-info #user-info:has(#user-config:active) #user-log{',
     'transform:translateY(1px) !important}',
@@ -446,13 +476,40 @@
     // and CPF are plain text and all their half holds, and it is narrower with
     // nothing else beside it — hiding it would leave a hairline in front of
     // nothing.
+    COM_HAS.cpfEstreito,
     '@media (max-width:359px){',
-    '#header #system-info #user-info:has(#user-config) #user-log{display:none !important}',
     '#header #system-info #user-info #user-config{',
     'width:38px !important;min-width:0 !important;padding:0 !important;',
     'justify-content:center !important}}'
   ].join('');
   document.documentElement.appendChild(cabecalho);
+
+  // WITHOUT `:has()` (Firefox 115-120). The three rules above were dropped by
+  // the parser, so the same declarations are appended to OUR OWN sheet, keyed to
+  // nothing, for whichever controls their template turned out to render. Read
+  // once, at DOMContentLoaded: the template is static, and #header stays hidden
+  // by `estilo` until ui.js mounts at document_idle, so this still lands before
+  // the bar is ever painted. Appended last, at the specificity of the rules it
+  // overrides, so order is what makes it win.
+  //
+  // Nothing of theirs is written to: no class, no attribute. A browser with
+  // `:has()` never runs any of it.
+  function semHas() {
+    var info = document.querySelector(INFO);
+    if (!info) return;
+    var plano = regrasPorControle(INFO, INFO, INFO);
+    var regras = info.querySelector('#user-config') ? plano.cpfEstreito : plano.semConfig;
+    if (!info.querySelector('#user-logout')) regras += plano.semSair;
+    cabecalho.textContent += regras;
+  }
+  var temHas = false;
+  try {
+    temHas = !!(root.CSS && root.CSS.supports && root.CSS.supports('selector(:has(a))'));
+  } catch (e) {}
+  if (!temHas) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', semHas);
+    else semHas();
+  }
 
   var revelado = false;
   function revelar() {
