@@ -1,0 +1,21 @@
+/**
+ * entrada.css — page-level styles for the offline registrar page.
+ * Only the host document is styled here: the registrar itself lives in its own
+ * Shadow DOM and brings tokens/overlay/settings CSS along (fetched by ui.js).
+ * That now includes the connection strip, which used to be a page-level
+ * element with its own ~50 lines of CSS in this file.
+ */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #eef2f6;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#entrada-root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+}

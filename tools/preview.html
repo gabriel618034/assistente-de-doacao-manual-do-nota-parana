@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prévia do registrador — só para inspeção visual</title>
+    <link rel="stylesheet" href="../src/offline/entrada.css" />
+    <style>
+      /* The one thing this harness adds: a width ruler, so the cell size ladder
+         (one line of 44 down to ~876px of entry, wrapping below) and the header
+         ladder can be checked at the breakpoints that matter without resizing
+         the window by hand. */
+      #previa-regua {
+        position: fixed;
+        z-index: 99;
+        right: 8px;
+        bottom: 8px;
+        display: flex;
+        gap: 4px;
+        font: 12px/1 system-ui, sans-serif;
+      }
+      #previa-regua button {
+        padding: 5px 9px;
+        border: 1px solid #ccd;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      NOT PART OF THE EXTENSION, and not loaded by anything that ships. This is
+      the visual counterpart to tools/smoke.js: that script proves the logic
+      with no DOM, and this one puts the real registrar on screen with no
+      browser extension, so the strip, the 44 cells at every width, the popover and the
+      condition bars can be looked at.
+
+      It stubs exactly two things — chrome.storage.local (an in-memory object)
+      and chrome.runtime.getURL (a relative path) — and then loads the offline
+      page's own module graph, unchanged and in its own order. Nothing here is
+      a second copy of anything: if a module stops working, this page stops
+      working with it.
+
+      It never sends.
+
+      SERVE IT OVER HTTP; file:// does not work. ui.js fetch()es its five
+      stylesheets to inject them into the shadow roots, and a file:// page has
+      origin `null`, so Chrome refuses every one as CORS and the registrar
+      renders unstyled. Nothing on this page can work around that — a file://
+      document cannot read those files by any other route either — so under
+      file:// it mounts nothing and says how to open it instead. From the
+      repository root:
+
+        python -m http.server 8000
+        → http://localhost:8000/tools/preview.html
+    -->
+    <main id="entrada-root"></main>
+
+    <div id="previa-regua"></div>
+
+    <script>
+      (function () {
+        var guardado = {};
+        var ouvintes = [];
+        globalThis.chrome = {
+          runtime: {
+            getURL: function (p) { return '../' + p; },
+            getManifest: function () { return { version: 'prévia' }; }
+          },
+          storage: {
+            local: {
+              get: function (k) {
+                return Promise.resolve(k == null ? Object.assign({}, guardado) : { [k]: guardado[k] });
+              },
+              set: function (o) {
+                var mudancas = {};
+                Object.keys(o).forEach(function (k) {
+                  mudancas[k] = { oldValue: guardado[k], newValue: o[k] };
+                  guardado[k] = o[k];
+                });
+                return Promise.resolve().then(function () {
+                  ouvintes.forEach(function (fn) { fn(mudancas, 'local'); });
+                });
+              },
+              remove: function (k) {
+                [].concat(k).forEach(function (c) { delete guardado[c]; });
+                return Promise.resolve();
+              },
+              clear: function () { guardado = {}; return Promise.resolve(); }
+            },
+            onChanged: {
+              addListener: function (fn) { ouvintes.push(fn); },
+              removeListener: function (fn) { ouvintes = ouvintes.filter(function (f) { return f !== fn; }); }
+            }
+          }
+        };
+        // One entity, so the entry is not blocked behind the "configure a CNPJ"
+        // card and the strip is actually reachable.
+        guardado['nfpr:config'] = {
+          versaoConfig: 1,
+          entidades: [{ id: 'e1', nome: 'AMARAS', cnpj: '11222333000181', verificada: true }],
+          entidadeAtivaId: 'e1',
+          partesFixas: [],
+          parteFixaAtivaId: null,
+          // Fixed parts are ON in the shipped default too (config.js); spelled
+          // out here because the strip and its popover are half of what this
+          // page exists to let you look at. Flip it to false to see a machine
+          // where a scanner user switched the strip off — and, after entering
+          // one key by hand, the offer that tells a typist the feature is
+          // there.
+          preferencias: { partesFixas: true }
+        };
+      })();
+    </script>
+
+    <script src="../src/shared/browser.js"></script>
+    <script src="../src/shared/debug.js"></script>
+    <script src="../src/shared/site.js"></script>
+    <script src="../src/shared/dom.js"></script>
+    <script src="../src/shared/cnpj.js"></script>
+    <script src="../src/shared/chave.js"></script>
+    <script src="../src/shared/relogio.js"></script>
+    <script src="../src/shared/parte-fixa.js"></script>
+    <script src="../src/shared/config.js"></script>
+    <script src="../src/shared/entidade.js"></script>
+    <script src="../src/content/audio.js"></script>
+    <script src="../src/content/capture.js"></script>
+    <script src="../src/shared/connectivity.js"></script>
+    <script src="../src/shared/sec-entidades.js"></script>
+    <script src="../src/shared/sec-preferencias.js"></script>
+    <script src="../src/shared/settings-ui.js"></script>
+    <script src="../src/content/debug-ui.js"></script>
+    <script src="../src/content/strip-parte-fixa.js"></script>
+    <script src="../src/content/painel.js"></script>
+    <script src="../src/content/modal.js"></script>
+    <script src="../src/content/ui.js"></script>
+    <script src="../src/shared/registrador.js"></script>
+
+    <script>
+      (function () {
+        [360, 400, 570, 758, 982, 1200].forEach(function (w) {
+          var b = document.createElement('button');
+          b.textContent = w;
+          b.addEventListener('click', function () {
+            document.getElementById('entrada-root').style.maxWidth = w + 'px';
+          });
+          document.getElementById('previa-regua').appendChild(b);
+        });
+        document.addEventListener('DOMContentLoaded', async function () {
+          if (location.protocol === 'file:') {
+            // See the comment at the top: mounting here would only produce a
+            // CORS error per stylesheet and an unstyled registrar.
+            document.getElementById('entrada-root').textContent =
+              'Esta prévia precisa de um servidor. Na raiz do repositório: ' +
+              'python -m http.server 8000 — e abra ' +
+              'http://localhost:8000/tools/preview.html';
+            return;
+          }
+          var ui = await NFPR.UI.montar({
+            modoOffline: true,
+            montarEm: document.getElementById('entrada-root'),
+            // As entrada.js does — without it "Limpar a lista" empties the bar
+            // and leaves nfpr:falhas alone.
+            aoLimparFalhas: function () { return NFPR.Config.limparFalhas(); },
+            conexaoPermanente: true,
+            acaoConexao: { rotulo: 'Abrir o site de doação', aoClicar: function () {} }
+          });
+          ui.setConexao('rede');
+          await NFPR.Registrador.iniciar({
+            ui: ui,
+            msgDuplicada: 'Esta chave já está guardada para envio.',
+            aoAceitarChave: function (info) {
+              ui.atualizarItem(info.itemId, {
+                estado: 'aguardando',
+                mensagem: 'Guardada — prévia, nada é enviado.'
+              });
+            }
+          });
+          globalThis.ui = ui; // so the console can drive the bars
+        });
+      })();
+    </script>
+  </body>
+</html>

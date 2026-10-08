@@ -1,0 +1,49 @@
+/* base.css — the shadow-root reset, shared by BOTH roots.
+   Injected by ui.js together with tokens.css, registrar.css and modal.css.
+   `all: initial` on :host is what stops the government page's CSS reaching in;
+   everything after it exists to undo what that reset also took away. */
+
+:host {
+  /* tokens: src/shared/tokens.css, prepended by ui.js */
+  all: initial;
+  font: 14.5px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--nf-ink);
+}
+
+/* all: initial on :host breaks font inheritance for shadow-tree children —
+   re-declare explicitly so no element falls back to Times New Roman.
+   Also restore [hidden] since all: initial strips the UA stylesheet. */
+* {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+[hidden] {
+  display: none !important;
+}
+
+/* THE HOSTS' OWN BOXES, and why only one of them is styled here.
+   ui.js writes `all: initial` INLINE on every shadow host, and for normal
+   declarations the outer context wins: an inline style beats every :host rule
+   in this file. So a :host(...) rule does nothing unless it is !important —
+   an important declaration from the inner context beats the normal inline one,
+   and beats an important one from the site as well. (host-page.js hits the
+   same wall from outside for the header host, and uses !important for it.)
+
+   Overlay host (backdrop, modal, flash, floating toast): a full-viewport layer
+   above everything the site stacks, click-through except where a child turns
+   pointer-events back on (the open backdrop and modal). The z-index is the
+   point: the floating toast confirms a save made from the SITE's entity
+   dialog, a Bootstrap .modal at z-index 1050, and without this layer the toast
+   painted underneath it. Every child sets its own pointer-events, so the
+   inherited `none` changes no child's behaviour.
+
+   The registrar host needs nothing: it is left inline, wrapping the panel's
+   block, which lays out exactly as a block would. It used to carry flex,
+   width and a visibility gate here, none of which ever applied — and the
+   gates could not have hidden a frame anyway, since ui.js added `nfpr-pronto`
+   in the same task that mounted the host. */
+:host(.nfpr-overlay-host) {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  pointer-events: none !important;
+}

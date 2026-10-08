@@ -1,0 +1,208 @@
+<!doctype html>
+<!--
+  Chrome Web Store "small promo tile", 440x280. Not part of the extension.
+  Rendered to promo-pequeno-440x280.png with headless Chrome:
+    chrome --headless=new --hide-scrollbars --force-device-scale-factor=1
+           --window-size=440,280 --virtual-time-budget=5000 --screenshot=<png> <this file's URL>
+  (the time budget lets the Google Fonts load before the shot).
+  The icon is tools/icone/icone.svg, inlined with its ids prefixed.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@700&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 440px; height: 280px; overflow: hidden; background: #00264d; }
+
+  .tile {
+    position: relative; width: 440px; height: 280px; overflow: hidden;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: #fff;
+    background:
+      radial-gradient(120px 120px at 352px 92px, rgba(90, 194, 237, .55), transparent 70%),
+      radial-gradient(260px 200px at 360px 70px, rgba(20, 134, 201, .45), transparent 70%),
+      radial-gradient(220px 160px at 0 280px, rgba(21, 160, 90, .28), transparent 70%),
+      linear-gradient(128deg, #001d3d 0%, #00386c 38%, #0a5ea0 78%, #1486c9 100%);
+  }
+
+  /* faint dot grid, fading toward the headline */
+  .dots {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,.16) 1px, transparent 1.3px);
+    background-size: 14px 14px;
+    -webkit-mask-image: radial-gradient(260px 200px at 380px 60px, #000 10%, transparent 75%);
+            mask-image: radial-gradient(260px 200px at 380px 60px, #000 10%, transparent 75%);
+  }
+
+  /* the icon's horizon, Paraná yellow, sweeping behind everything */
+  .horizonte { position: absolute; inset: 0; }
+
+  .eyebrow {
+    position: absolute; left: 26px; top: 26px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px 4px 7px; border-radius: 999px;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
+    font-size: 9.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(255,255,255,.92);
+    backdrop-filter: blur(4px);
+  }
+  .eyebrow i {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #3ddc84; box-shadow: 0 0 0 3px rgba(61,220,132,.25), 0 0 8px #3ddc84;
+  }
+
+  h1 {
+    position: absolute; left: 25px; top: 54px;
+    font-size: 35px; line-height: 1.02; font-weight: 800; letter-spacing: -.028em;
+    text-shadow: 0 2px 14px rgba(0, 20, 50, .35);
+  }
+  h1 .real {
+    position: relative; white-space: nowrap;
+    background: linear-gradient(90deg, #ffffff 0%, #8fdcff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  h1 svg.risco { position: absolute; left: -2px; bottom: -9px; width: 104%; height: 12px; overflow: visible; }
+
+  .sub {
+    position: absolute; left: 26px; top: 143px; width: 222px;
+    font-size: 12.5px; line-height: 1.38; font-weight: 600; color: rgba(225, 240, 255, .82);
+  }
+
+  .icone {
+    position: absolute; left: 286px; top: 18px; width: 140px; height: 140px;
+    transform: rotate(7deg);
+    filter: drop-shadow(0 16px 22px rgba(0, 18, 45, .55)) drop-shadow(0 0 1px rgba(255,255,255,.4));
+  }
+
+  .toast {
+    position: absolute; left: 236px; top: 140px;
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 12px 6px 6px; border-radius: 999px;
+    background: #ffffff; color: #0b6b3c;
+    font-size: 11.5px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap;
+    box-shadow: 0 10px 24px rgba(0, 25, 55, .45), 0 0 0 1px rgba(21,160,90,.25);
+    transform: rotate(-4deg);
+  }
+  .toast b {
+    display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(160deg, #22c06f, #129150);
+    box-shadow: 0 0 0 3px rgba(21,160,90,.18);
+  }
+
+  /* the 44 cells, bleeding off both edges, with a scanner beam through them */
+  .faixa {
+    position: absolute; left: -220px; top: 237px;
+    transform: rotate(-4deg); transform-origin: 0 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .grupo { display: flex; gap: 3px; }
+  .c {
+    width: 22px; height: 31px; border-radius: 6px;
+    display: grid; place-items: center;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 15px; font-weight: 700;
+    background: linear-gradient(160deg, #1d9ae0 0%, #0a6fb8 60%, #0860a0 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 10px rgba(0, 20, 50, .35);
+    color: #fff;
+  }
+  .c.caret { background: #fff; box-shadow: 0 0 0 3px rgba(90,194,237,.55), 0 0 18px rgba(90,194,237,.8); }
+  .c.caret::after { content: ""; width: 2px; height: 17px; background: #0a6fb8; border-radius: 1px; }
+  .c.vazia {
+    background: rgba(255,255,255,.05); box-shadow: none;
+    border: 1.5px dashed rgba(255,255,255,.28);
+  }
+  .feixe {
+    position: absolute; left: -40px; right: -40px; top: 14px; height: 3px;
+    background: linear-gradient(90deg, transparent 0%, #ff4a57 18%, #ff8a92 55%, #ff4a57 82%, transparent 100%);
+    box-shadow: 0 0 6px 1px rgba(255, 60, 75, .9), 0 0 22px 6px rgba(255, 60, 75, .45);
+    border-radius: 2px; mix-blend-mode: screen;
+  }
+</style>
+</head>
+<body>
+<div class="tile">
+  <div class="dots"></div>
+
+  <svg class="horizonte" viewBox="0 0 440 280" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="h-am" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#f2e01c" stop-opacity="0"/>
+        <stop offset=".35" stop-color="#f2e01c" stop-opacity=".55"/>
+        <stop offset="1" stop-color="#f2e01c" stop-opacity=".9"/>
+      </linearGradient>
+      <linearGradient id="h-vd" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#43ad3f" stop-opacity=".95"/>
+        <stop offset=".5" stop-color="#16944a" stop-opacity=".9"/>
+        <stop offset="1" stop-color="#067a44" stop-opacity=".85"/>
+      </linearGradient>
+    </defs>
+    <path d="M-10 282 C 120 262 280 236 450 234 V300 H-10 Z" fill="url(#h-vd)"/>
+    <path d="M-10 282 C 120 262 280 236 450 234" fill="none" stroke="url(#h-am)" stroke-width="4"/>
+  </svg>
+
+  <div class="eyebrow"><i></i>Nota Paraná · Doação manual</div>
+
+  <h1>Doe suas<br><span class="real">notas fiscais<svg class="risco" viewBox="0 0 100 12" preserveAspectRatio="none"><path d="M1 8 C 30 2 62 2 99 6" fill="none" stroke="#f2e01c" stroke-width="3.2" stroke-linecap="round"/></svg></span></h1>
+
+  <p class="sub">Acompanhe cada doação manual<br/>ao escanear ou digitar suas notas.</p>
+
+  <svg class="icone" viewBox="0 0 128 128">
+    <defs>
+      <linearGradient id="i-ceu" x1="1" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#1fa0e8"/><stop offset=".55" stop-color="#0a62c0"/><stop offset="1" stop-color="#0747a0"/>
+      </linearGradient>
+      <linearGradient id="i-campo" x1="1" y1="0" x2=".15" y2="1">
+        <stop offset="0" stop-color="#6cbf3a"/><stop offset=".5" stop-color="#2f9f45"/><stop offset="1" stop-color="#078a4c"/>
+      </linearGradient>
+      <linearGradient id="i-dedos" gradientUnits="userSpaceOnUse" x1="80.3" y1="86" x2="95.5" y2="75.6">
+        <stop offset="0" stop-color="#0b4ea2"/><stop offset=".45" stop-color="#0b4ea2"/><stop offset="1" stop-color="#0b4ea2" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="i-pulso" gradientUnits="userSpaceOnUse" x1="37.5" y1="72.5" x2="10" y2="85.5">
+        <stop offset="0" stop-color="#0b4ea2"/><stop offset=".3" stop-color="#0b4ea2"/><stop offset="1" stop-color="#0b4ea2" stop-opacity="0"/>
+      </linearGradient>
+      <clipPath id="i-c"><rect x="4" y="4" width="120" height="120" rx="26"/></clipPath>
+    </defs>
+    <g clip-path="url(#i-c)">
+      <rect width="128" height="128" fill="url(#i-ceu)"/>
+      <path d="M0 82 C 30 70 80 58 128 65" fill="none" stroke="#f2e01c" stroke-width="10"/>
+      <path d="M0 82 C 30 70 80 58 128 65 V128 H0 Z" fill="url(#i-campo)"/>
+    </g>
+    <path d="M37 90 V18.3 L42.5 21.5 L48 18.3 L53.5 21.5 L59 18.3 L64.5 21.5 L70 18.3 L75.5 21.5 L81 18.3 L86.5 21.5 L92 18.3 V90 Z"
+          fill="#ffffff" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
+    <g fill="#5596e6">
+      <rect x="44" y="27.7" width="41" height="3.8" rx="1.9"/>
+      <rect x="44" y="34.6" width="31" height="3.8" rx="1.9"/>
+      <rect x="44" y="66.2" width="18" height="3.8" rx="1.9"/>
+      <rect x="66.5" y="66.2" width="18.5" height="3.8" rx="1.9"/>
+    </g>
+    <path d="M64.5 64.8 C 56 59 51.3 53.5 51.3 48.6 C 51.3 45.3 54 42.8 57.4 42.8 C 60.6 42.8 63 44.6 64.5 47.3 C 66 44.6 68.4 42.8 71.6 42.8 C 75 42.8 77.7 45.3 77.7 48.6 C 77.7 53.5 73 59 64.5 64.8 Z" fill="#e8313f"/>
+    <g clip-path="url(#i-c)">
+      <path d="M-4 93 C 1 90.5 6 88.5 10 85.5 C 20 78 30 72.5 37.5 72.5 C 45 72.5 51 77 57 80 C 62 82.3 70 82 75 83 C 77.5 83.6 79.3 84.8 80 86.3 L 94 76.8 C 97 74.5 101.5 74.2 103.4 76.8 C 105 79 104.3 81.8 102.4 83.8 C 96.5 90 90 96 83.5 100.5 C 75.5 105.5 67 109.5 59 109.5 C 48 109.5 38 105.5 28 102 C 18 98.5 8 100 -4 105 Z" fill="#ffffff"/>
+    </g>
+    <g fill="none" stroke="#0b4ea2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M37.5 72.5 C 45 72.5 51 77 57 80 C 62 82.3 70 82 75 83 C 79.5 84 80.8 87.8 77.8 89.7 C 75.5 91.1 71.5 91.6 66.5 92 C 59.5 92.6 53 92.4 47 91.2"/>
+    </g>
+    <path d="M80.3 86 L 95.5 75.6" fill="none" stroke="url(#i-dedos)" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M37.5 72.5 C 30 72.5 20 78 10 85.5" fill="none" stroke="url(#i-pulso)" stroke-width="2.2" stroke-linecap="round"/>
+  </svg>
+
+  <div class="toast"><b><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.3 6.3 L4.9 8.8 L9.8 3.4" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></b>Doado com sucesso!</div>
+
+  <div class="faixa" id="faixa"><div class="feixe"></div></div>
+</div>
+<script>
+  // typed, caret, the rest empty — groups of four, like the registrar.
+  const digitos = '--------412609042006540';
+  const total = 32, faixa = document.getElementById('faixa');
+  let grupo;
+  for (let i = 0; i < total; i++) {
+    if (i % 4 === 0) { grupo = document.createElement('div'); grupo.className = 'grupo'; faixa.appendChild(grupo); }
+    const c = document.createElement('div');
+    if (i < digitos.length) { c.className = 'c'; c.textContent = digitos[i]; }
+    else if (i === digitos.length) c.className = 'c caret';
+    else c.className = 'c vazia';
+    grupo.appendChild(c);
+  }
+</script>
+</body>
+</html>

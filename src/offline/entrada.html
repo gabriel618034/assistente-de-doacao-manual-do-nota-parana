@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Registrar notas sem internet — Assistente de Doação Manual</title>
+    <link rel="stylesheet" href="entrada.css" />
+  </head>
+  <body>
+    <!-- The connection strip is the registrar's own bar, inside the Shadow DOM
+         below: same widget, same states, same rules as the live page. It only
+         turns green after a probe actually REACHES the site (navigator.onLine
+         stays true with the router unplugged), so the "open the site" button
+         appears only when the trip will work — and navigating is ALWAYS the
+         volunteer's click, never automatic. -->
+    <main id="entrada-root"></main>
+
+    <!-- Same shared modules the donation content script loads, in the same
+         order (dependencies first), MINUS donation.js: this page never SENDS.
+         connectivity.js is loaded — it powers the read-only reachability probe
+         behind the strip above. entrada.js is the bootstrap. -->
+    <script src="../shared/browser.js"></script>
+    <script src="../shared/debug.js"></script>
+    <script src="../shared/site.js"></script>
+    <script src="../shared/dom.js"></script>
+    <script src="../shared/cnpj.js"></script>
+    <script src="../shared/chave.js"></script>
+    <script src="../shared/relogio.js"></script>
+    <script src="../shared/parte-fixa.js"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/entidade.js"></script>
+    <script src="../content/audio.js"></script>
+    <script src="../content/capture.js"></script>
+    <script src="../shared/connectivity.js"></script>
+    <script src="../shared/sec-entidades.js"></script>
+    <script src="../shared/sec-preferencias.js"></script>
+    <script src="../shared/settings-ui.js"></script>
+    <script src="../content/debug-ui.js"></script>
+    <script src="../content/strip-parte-fixa.js"></script>
+    <script src="../content/painel.js"></script>
+    <script src="../content/modal.js"></script>
+    <script src="../content/ui.js"></script>
+    <script src="../shared/registrador.js"></script>
+    <script src="entrada.js"></script>
+  </body>
+</html>

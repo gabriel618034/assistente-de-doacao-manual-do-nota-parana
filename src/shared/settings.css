@@ -1,0 +1,457 @@
+/* settings.css — configuration surface, shared by the popup and the modal.
+   Everything is scoped under .nfpr-settings and prefixed nfpr- so it is safe to
+   inject anywhere (including into the host page's light DOM) without collisions.
+   Tokens come from src/shared/tokens.css, which every host loads first.
+
+   Design language (v2 — "clear & modern") kept in lock-step with registrar.css:
+   one trustworthy blue, soft depth, generous radii, and controls big enough to
+   read and tap at a glance. */
+
+.nfpr-settings {
+  /* Every --nf-* it reads is declared in src/shared/tokens.css, linked by
+     popup.html and prepended by ui.js. */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--nf-ink);
+  font: 14.5px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  box-sizing: border-box;
+}
+.nfpr-settings *,
+.nfpr-settings *::before,
+.nfpr-settings *::after {
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------------- Cards */
+.nfpr-card {
+  background: var(--nf-bg);
+  border: 1px solid var(--nf-line);
+  /* Its own token: --nf-radius is the outer shell's 20px. */
+  border-radius: var(--nf-radius-card);
+  padding: 18px;
+  box-shadow: var(--nf-shadow-sm);
+}
+.nfpr-card-head {
+  margin-bottom: 14px;
+}
+/* Seven switches in one column gave nobody a way to find the one they came
+   for. The blocks are shape only: nothing was deleted, merged or defaulted
+   differently when they arrived. */
+.nfpr-pref-bloco + .nfpr-pref-bloco {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--nf-line);
+}
+.nfpr-pref-bloco-titulo {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nf-muted);
+}
+.nfpr-input-sm {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.nfpr-card-title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--nf-blue);
+  letter-spacing: 0.1px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.nfpr-card-title::before {
+  content: "";
+  width: 4px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--nf-grad-primary);
+  flex: 0 0 auto;
+}
+.nfpr-card-sub {
+  margin: 6px 0 0 13px;
+  font-size: 12.5px;
+  color: var(--nf-muted);
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------ Inputs */
+.nfpr-input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  background: var(--nf-bg);
+  color: var(--nf-ink);
+  /* Form controls do NOT inherit font-family — every browser substitutes its
+     own. On <input> the fallback happens to sit close enough to the labels
+     that nobody noticed; on <select> it is plainly a different typeface, and
+     its taller default line-height overflows a fixed height. Stating both here
+     fixes the whole family at once. .nfpr-mono is declared after this rule, so
+     the monospace fields still win. */
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.nfpr-input::placeholder {
+  color: var(--nf-faint);
+}
+.nfpr-input:hover {
+  border-color: #cfdae4;
+}
+.nfpr-input:focus {
+  border-color: var(--nf-blue-600);
+  box-shadow: var(--nf-ring);
+}
+.nfpr-input.nfpr-valid {
+  border-color: var(--nf-ok);
+  padding-right: 38px;
+  background: var(--nf-bg)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315a05a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    no-repeat right 12px center / 17px;
+}
+.nfpr-input.nfpr-invalid {
+  border-color: var(--nf-err);
+  padding-right: 38px;
+  background: var(--nf-bg)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23df4338' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E")
+    no-repeat right 12px center / 16px;
+}
+.nfpr-mono {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+  letter-spacing: 0.3px;
+}
+
+.nfpr-form-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.nfpr-form-row .nfpr-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.nfpr-form-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nfpr-form-actions .nfpr-btn-primary {
+  flex: 1 1 auto;
+}
+/* The add-an-entity form under the entity list. Tinted and headed so it reads
+   as a separate job rather than as the list's last row. */
+.nfpr-novo {
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--nf-bg-soft);
+  border: 1px solid var(--nf-line);
+  border-radius: var(--nf-radius-md);
+}
+.nfpr-novo-titulo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nf-muted);
+}
+.nfpr-novo .nfpr-form-row {
+  margin-top: 8px;
+}
+.nfpr-help {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  color: var(--nf-muted);
+  min-height: 15px;
+  line-height: 1.4;
+}
+.nfpr-help-ok {
+  color: var(--nf-ok);
+  font-weight: 600;
+}
+.nfpr-help-err {
+  color: var(--nf-err);
+  font-weight: 600;
+}
+
+/* ----------------------------------------------------------------- Buttons */
+.nfpr-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--nf-radius-sm);
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.06s ease, color 0.15s ease;
+  font-family: inherit;
+}
+.nfpr-btn:active {
+  transform: translateY(1px);
+}
+.nfpr-btn-primary {
+  background: var(--nf-grad-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(10, 111, 184, 0.28);
+}
+.nfpr-btn-primary:hover {
+  box-shadow: 0 6px 16px rgba(10, 111, 184, 0.36);
+  filter: brightness(1.04);
+}
+.nfpr-btn-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--nf-ring), 0 4px 12px rgba(10, 111, 184, 0.28);
+}
+.nfpr-btn-ghost {
+  background: var(--nf-bg);
+  color: var(--nf-ink-soft);
+  border-color: var(--nf-line);
+}
+.nfpr-btn-ghost:hover {
+  background: var(--nf-bg-soft);
+  border-color: #cfdae4;
+}
+/* DANGER IS A MEANING, NEVER A SIZE. This was `.nfpr-btn-ghost.nfpr-btn-sm`
+   for as long as the entity list was the only place with small ghost buttons,
+   and every one added since inherited a danger colour it had no business
+   wearing: the fixed part list's `Salvar` — the gesture that KEEPS a fixed part
+   — flashed red on hover, and so did `Renomear`, the fixed part editor's
+   `Cancelar` and every debug fixture button. Nothing on screen said why,
+   because a hover state is only ever seen one button at a time.
+
+   It lives here rather than in registrar.css because the entity list renders in
+   the toolbar popup too, and that window loads tokens.css + settings.css and
+   nothing else. */
+.nfpr-btn-perigo {
+  color: var(--nf-err);
+  border-color: var(--nf-err-line);
+}
+/* Reads as an outline until you are actually on it, then commits to the colour. */
+.nfpr-btn-ghost.nfpr-btn-perigo:hover {
+  background: var(--nf-err);
+  border-color: var(--nf-err);
+  color: #fff;
+}
+/* ON A LIST ROW THE RESTING OUTLINE IS NOT AFFORDABLE. Every row carries a
+   `Remover`, and twenty red outlines down a list shout over the one thing that
+   list exists to say — which fixed part, or which entity, is the chosen one.
+   Quiet at rest, danger on hover, and the solid fill above is left to the
+   full-size buttons that appear once each. */
+.nfpr-btn-perigo.nfpr-btn-sm {
+  color: var(--nf-ink-soft);
+  border-color: var(--nf-line);
+}
+.nfpr-btn-ghost.nfpr-btn-perigo.nfpr-btn-sm:hover {
+  background: var(--nf-err-bg);
+  color: var(--nf-err);
+  border-color: #f0c9c9;
+}
+.nfpr-btn-sm {
+  position: relative;
+  z-index: 1;
+  padding: 7px 12px;
+  font-size: 12.5px;
+}
+
+/* ----------------------------------------------------- Lists of saved items */
+.nfpr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.nfpr-empty {
+  margin: 0;
+  padding: 18px 14px;
+  text-align: center;
+  color: var(--nf-muted);
+  background: var(--nf-bg-soft);
+  border: 1.5px dashed var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  font-size: 13px;
+}
+.nfpr-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  background: var(--nf-bg);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+/* Stretch the radio over the entire item so any click on it activates selection. */
+.nfpr-item .nfpr-radio {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+}
+.nfpr-item:hover {
+  border-color: #cfdae4;
+  box-shadow: var(--nf-shadow-sm);
+}
+/* The radio above is invisible by design, so its focus ring was too: Tab
+   landed on it and nothing on screen moved, which is why the list looked as if
+   only "Remover" could be reached. The ring goes on the row the radio covers.
+   Keyboard focus only — a click is already looking at the row. */
+.nfpr-item:has(> .nfpr-radio:focus-visible) {
+  outline: 2px solid var(--nf-blue-600);
+  outline-offset: 2px;
+}
+.nfpr-item-ativo {
+  border-color: var(--nf-blue-600);
+  background: linear-gradient(180deg, var(--nf-blue-50), #fff);
+  box-shadow: 0 0 0 1px var(--nf-blue-600) inset;
+}
+.nfpr-item-ativo::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--nf-grad-primary);
+}
+.nfpr-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.nfpr-item-nome {
+  font-weight: 700;
+  font-size: 14px;
+}
+.nfpr-item-sub {
+  font-size: 12px;
+  color: var(--nf-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nfpr-radio {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--nf-blue-600);
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+.nfpr-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
+  background: var(--nf-grad-primary);
+  border-radius: 999px;
+  padding: 4px 11px;
+  flex: 0 0 auto;
+  box-shadow: 0 2px 6px rgba(10, 111, 184, 0.3);
+}
+.nfpr-tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+/* ------------------------------------------------------------- Preferences */
+.nfpr-pref {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+  border-top: 1px solid var(--nf-line);
+}
+.nfpr-card .nfpr-pref:first-of-type {
+  border-top: none;
+  padding-top: 2px;
+}
+.nfpr-pref-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.nfpr-pref-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+.nfpr-pref-desc {
+  font-size: 12.5px;
+  color: var(--nf-muted);
+  max-width: 44ch;
+  line-height: 1.45;
+}
+
+/* Toggle switch */
+.nfpr-switch {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.nfpr-switch-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.nfpr-switch-track {
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  background: #cbd5de;
+  transition: background 0.2s ease;
+  display: inline-block;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(13, 38, 64, 0.18);
+}
+.nfpr-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28), 0 1px 1px rgba(0, 0, 0, 0.16);
+  transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.nfpr-switch-input:checked + .nfpr-switch-track {
+  background: var(--nf-grad-primary);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.nfpr-switch-input:checked + .nfpr-switch-track .nfpr-switch-thumb {
+  transform: translateX(20px);
+}
+.nfpr-switch-input:focus-visible + .nfpr-switch-track {
+  box-shadow: var(--nf-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nfpr-settings * {
+    transition: none !important;
+  }
+}

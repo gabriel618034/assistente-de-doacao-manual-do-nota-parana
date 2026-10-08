@@ -1,0 +1,124 @@
+{
+  "manifest_version": 3,
+  "name": "Assistente de Doação Manual do Nota Paraná",
+  "short_name": "Assistente NFPR",
+  "version": "1.0.2",
+  "description": "Doar notas fiscais pelo Nota Paraná ficou mais simples: digite ou use o leitor e acompanhe cada doação, nota por nota.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Assistente de Doação Manual do Nota Paraná",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "scripts": [
+      "src/background/service-worker.js"
+    ]
+  },
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "https://notaparana.pr.gov.br/nfprweb/DoacaoDocumentoFiscalCadastrar*",
+    "https://notaparana.pr.gov.br/nfprweb/ContaCorrente*",
+    "https://notaparana.pr.gov.br/nfprweb/app/v1/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://notaparana.pr.gov.br/nfprweb/ContaCorrente*"
+      ],
+      "run_at": "document_idle",
+      "js": [
+        "src/shared/browser.js",
+        "src/shared/debug.js",
+        "src/shared/site.js",
+        "src/shared/config.js",
+        "src/content/conta-corrente.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://notaparana.pr.gov.br/nfprweb/DoacaoDocumentoFiscalCadastrar*"
+      ],
+      "run_at": "document_start",
+      "js": [
+        "src/content/host-page.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://notaparana.pr.gov.br/nfprweb/DoacaoDocumentoFiscalCadastrar*"
+      ],
+      "run_at": "document_idle",
+      "js": [
+        "src/shared/browser.js",
+        "src/shared/debug.js",
+        "src/shared/site.js",
+        "src/shared/dom.js",
+        "src/shared/cnpj.js",
+        "src/shared/chave.js",
+        "src/shared/relogio.js",
+        "src/shared/parte-fixa.js",
+        "src/shared/config.js",
+        "src/shared/entidade.js",
+        "src/content/audio.js",
+        "src/content/capture.js",
+        "src/shared/connectivity.js",
+        "src/content/donation.js",
+        "src/content/despacho.js",
+        "src/content/sessao.js",
+        "src/shared/sec-entidades.js",
+        "src/shared/sec-preferencias.js",
+        "src/shared/settings-ui.js",
+        "src/content/debug-ui.js",
+        "src/content/strip-parte-fixa.js",
+        "src/content/painel.js",
+        "src/content/modal.js",
+        "src/content/ui.js",
+        "src/content/modal-entidade.js",
+        "src/shared/registrador.js",
+        "src/content/content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/shared/tokens.css",
+        "src/content/base.css",
+        "src/content/registrar.css",
+        "src/content/modal.css",
+        "src/shared/settings.css",
+        "src/offline/entrada.html",
+        "icons/icon-48.png",
+        "icons/icon-128.png"
+      ],
+      "matches": [
+        "https://notaparana.pr.gov.br/*"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "assistente-doacao-manual-nfpr@gabriel618034.br",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}

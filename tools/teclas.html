@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<!--
+  tools/teclas.html — a keystroke recorder. NOT part of the extension and not a
+  test: empacotar.js ships manifest.json, icons/ and src/ and nothing else.
+
+  WHY IT EXISTS: capture.js reads a scanner through `keydown` and nothing else,
+  so a scanner that delivers its characters some other way types into ordinary
+  text boxes and is invisible to the registrar. The first one reported was a
+  scanner in "teclado virtual" mode (2026-10-07). What such a mode really sends
+  differs by maker and is not written down anywhere we can read — the usual
+  form is Alt + the character's code on the numeric keypad — so before any of
+  it is supported, it has to be SEEN. This page writes down every keyboard and
+  text event a scan produces, with its gap, in a form that can be pasted back.
+
+  It opens straight from disk (file://): no script, stylesheet or request
+  leaves this file. It depends on nothing in src/.
+
+  Every event is recorded in the capture phase at the document, the same place
+  capture.js listens, and the text box exists only so that a character with no
+  keydown of its own (which is what is being looked for) has somewhere to land
+  and shows up as `beforeinput` / `input`.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gravador de teclas — o que o leitor envia</title>
+    <style>
+      body {
+        margin: 0 auto;
+        max-width: 900px;
+        padding: 16px;
+        font: 15px/1.5 system-ui, sans-serif;
+        color: #1c2733;
+        background: #f3f6fa;
+      }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      p { margin: 6px 0; }
+      ol { margin: 6px 0 12px; padding-left: 22px; }
+      .campo {
+        display: block;
+        margin: 0 0 8px;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 10px;
+        font: 16px ui-monospace, Consolas, monospace;
+        border: 2px solid #1565a8;
+        border-radius: 8px;
+      }
+      .acoes { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+      button {
+        padding: 8px 14px;
+        font: inherit;
+        border: 1px solid #b9c6d6;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+      }
+      button:focus-visible, .campo:focus-visible { outline: 3px solid #f0a020; outline-offset: 1px; }
+      #aviso { color: #46586b; }
+      #registro {
+        box-sizing: border-box;
+        width: 100%;
+        height: 50vh;
+        padding: 10px;
+        font: 12px/1.45 ui-monospace, Consolas, monospace;
+        white-space: pre;
+        border: 1px solid #b9c6d6;
+        border-radius: 8px;
+        background: #fff;
+        resize: vertical;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gravador de teclas</h1>
+    <p>Mostra exatamente o que o leitor envia ao computador. Nada sai desta página.</p>
+    <ol>
+      <li>Clique em uma das caixas abaixo (ou fora delas, para testar sem caixa nenhuma).</li>
+      <li>Leia <b>um</b> código com o leitor, ou pressione algumas teclas.</li>
+      <li>Clique em <b>Copiar o registro</b> e cole o resultado na conversa.</li>
+      <li>Clique em <b>Limpar</b> antes do teste seguinte.</li>
+    </ol>
+    <input id="campo" class="campo" type="text" autocomplete="off" spellcheck="false" placeholder="Caixa A — comum" />
+    <input id="campoB" class="campo" type="text" readonly placeholder="Caixa B — somente leitura (como a do registrador hoje)" />
+    <input id="campoC" class="campo" type="text" inputmode="none" autocomplete="off" spellcheck="false" placeholder="Caixa C — comum, com inputmode=none" />
+    <div class="acoes">
+      <button id="copiar" type="button">Copiar o registro</button>
+      <button id="limpar" type="button">Limpar</button>
+      <span id="aviso"></span>
+    </div>
+    <textarea id="registro" readonly></textarea>
+
+    <script>
+      (function () {
+        'use strict';
+        const campo = document.getElementById('campo');
+        const registro = document.getElementById('registro');
+        const aviso = document.getElementById('aviso');
+
+        let linhas = [];
+        let anterior = 0;
+
+        // One line per event: the gap since the previous one, the event, and
+        // only the fields that say something. `key` and `data` go through
+        // JSON.stringify so a space, a Tab or a control character is visible.
+        function anotar(e) {
+          const agora = e.timeStamp;
+          const gap = linhas.length ? Math.round(agora - anterior) : 0;
+          anterior = agora;
+          // Where the keyboard was: which box, or the page itself.
+          const alvo = (e.target && (e.target.id || e.target.tagName)) || '?';
+          const partes = [('+' + gap).padStart(6) + ' ms', e.type.padEnd(17), ('em=' + alvo).padEnd(10)];
+          if ('key' in e) {
+            partes.push('key=' + JSON.stringify(e.key), 'code=' + e.code);
+            if (e.location) partes.push('loc=' + e.location);
+            const mods = ['ctrlKey', 'altKey', 'shiftKey', 'metaKey'].filter((m) => e[m]);
+            if (mods.length) partes.push(mods.map((m) => m.replace('Key', '')).join('+'));
+            if (e.repeat) partes.push('repeat');
+            if (e.isComposing) partes.push('composing');
+            if (e.getModifierState && e.getModifierState('NumLock')) partes.push('NumLock');
+          }
+          if ('inputType' in e) partes.push('inputType=' + e.inputType);
+          if ('data' in e && e.data != null) partes.push('data=' + JSON.stringify(e.data));
+          if (e.type === 'paste') {
+            partes.push('texto=' + JSON.stringify(e.clipboardData && e.clipboardData.getData('text')));
+          }
+          linhas.push(partes.join('  '));
+        }
+
+        function pintar() {
+          // Never under a selection: a paint still pending from the last scan
+          // would land after the log was selected for copying and undo it.
+          if (document.activeElement === registro) return;
+          registro.value = linhas.join('\n');
+          registro.scrollTop = registro.scrollHeight;
+        }
+
+        // Painted once per frame: a scan is dozens of events inside a few
+        // milliseconds, and repainting on each would itself stretch the gaps
+        // this page exists to measure.
+        let agendado = false;
+        function registrar(e) {
+          // NOT WHAT IS PRESSED ON THE LOG ITSELF, OR ON A BUTTON. The copy
+          // fallback below leaves the log selected for Ctrl+C, and recording
+          // that Ctrl repainted the box and threw the selection away — the
+          // log could not be copied by the only means left to copy it.
+          if (e.target === registro || (e.target && e.target.tagName === 'BUTTON')) return;
+          anotar(e);
+          if (agendado) return;
+          agendado = true;
+          requestAnimationFrame(function () {
+            agendado = false;
+            pintar();
+          });
+        }
+
+        ['keydown', 'keypress', 'keyup', 'beforeinput', 'input', 'paste',
+          'compositionstart', 'compositionupdate', 'compositionend'].forEach(function (tipo) {
+          document.addEventListener(tipo, registrar, true);
+        });
+
+        // Tab and Enter are what a scanner ends a read with. Left alone, a Tab
+        // would walk focus off the box and the rest of the read would be lost
+        // to whatever it landed on — recorded first, then held here.
+        const campos = [campo, document.getElementById('campoB'), document.getElementById('campoC')];
+        campos.forEach(function (c) {
+          c.addEventListener('keydown', function (e) {
+            if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey) e.preventDefault();
+          });
+        });
+
+        document.getElementById('limpar').addEventListener('click', function () {
+          linhas = [];
+          campos.forEach(function (c) { c.value = ''; });
+          aviso.textContent = '';
+          pintar();
+        });
+
+        document.getElementById('copiar').addEventListener('click', async function () {
+          const texto =
+            'navegador: ' + navigator.userAgent + '\n' +
+            'texto nas caixas A, B, C: ' + JSON.stringify(campos.map(function (c) { return c.value; })) + '\n' +
+            'eventos: ' + linhas.length + '\n\n' + linhas.join('\n');
+          try {
+            await navigator.clipboard.writeText(texto);
+            aviso.textContent = 'Copiado. Cole na conversa.';
+          } catch (erro) {
+            // No clipboard API (a page opened from disk is not always a secure
+            // context). The old command still works there, on a selection.
+            registro.value = texto;
+            registro.focus();
+            registro.select();
+            let copiou = false;
+            try { copiou = document.execCommand('copy'); } catch (outro) { copiou = false; }
+            aviso.textContent = copiou
+              ? 'Copiado. Cole na conversa.'
+              : 'Selecionado. Pressione Ctrl+C para copiar.';
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

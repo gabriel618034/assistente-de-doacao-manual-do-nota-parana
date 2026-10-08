@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assistente de Doação Manual do Nota Paraná</title>
+    <link rel="stylesheet" href="../shared/tokens.css" />
+    <link rel="stylesheet" href="../shared/settings.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="pop-head">
+      <div class="pop-brand">
+        <!-- Replaced by popup.js with NFPR.iconeMarca — one definition of the
+             brand mark, shared with the registrar and the modal header. -->
+        <span class="pop-brand-icon" id="pop-brand-icon"></span>
+        <div class="pop-brand-text">
+          <strong>Assistente de Doação Manual</strong>
+          <span>Nota Paraná · Configurações</span>
+        </div>
+      </div>
+    </header>
+
+    <p class="pop-intro">
+      Selecione a entidade beneficiária e abra a página de doação manual do
+      Nota Paraná. Nessa página, o assistente ocupa o lugar do formulário do
+      site.
+    </p>
+
+    <div class="pop-actions">
+      <button id="pop-abrir-site" type="button" class="nfpr-btn nfpr-btn-primary">
+        Abrir a página de doação
+      </button>
+    </div>
+
+    <main id="pop-root" class="pop-root"></main>
+
+    <footer class="pop-foot">
+      <span id="pop-versao"></span>
+      <span>A.M.D.G.</span>
+    </footer>
+
+    <!-- Shared modules first (order matters), then the popup bootstrap.
+
+         NO FIXED PARTS HERE, deliberately: a fixed part is working state, and
+         this window has no key entry to use one with, so managing one from
+         here was managing it away from the only place its effect is visible.
+         parte-fixa.js itself stays — it is unused now, and removing a loader line is a
+         bigger change than 160 lines that cost nothing. chave.js and
+         relogio.js must stay regardless: debug.js uses both. -->
+    <script src="../shared/browser.js"></script>
+    <script src="../shared/debug.js"></script>
+    <script src="../shared/site.js"></script>
+    <script src="../shared/dom.js"></script>
+    <script src="../shared/cnpj.js"></script>
+    <script src="../shared/chave.js"></script>
+    <script src="../shared/relogio.js"></script>
+    <script src="../shared/parte-fixa.js"></script>
+    <script src="../shared/config.js"></script>
+    <script src="../shared/entidade.js"></script>
+    <script src="../shared/sec-entidades.js"></script>
+    <script src="../shared/sec-preferencias.js"></script>
+    <script src="../shared/settings-ui.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

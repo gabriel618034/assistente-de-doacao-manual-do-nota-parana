@@ -1,0 +1,7 @@
+# Saved copy of the government's donation page (HTML + its own JS/CSS/images),
+# kept as a read-only reference for how the site's own page behaves.
+# Not our code, not for distribution — see CLAUDE.md "Reference material".
+/reference/
+
+# Store packages written by tools/empacotar.js — derived, never committed.
+/dist/

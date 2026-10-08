@@ -1,0 +1,129 @@
+/* popup.css — chrome around the shared SettingsUI inside the toolbar popup.
+   Matches the v2 "clear & modern" language used by registrar.css / settings.css. */
+
+:root {
+  --pop-blue-600: #0a6fb8;
+  --pop-muted: #5e6e7b;
+  --pop-line: #e6edf3;
+  --pop-grad: linear-gradient(125deg, #00386c 0%, #0a5ea0 52%, #1486c9 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  width: 384px;
+  max-height: 600px;
+  overflow-y: auto;
+  background: #f4f7fb;
+  color: #14222e;
+  font: 14.5px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+body::-webkit-scrollbar {
+  width: 11px;
+}
+body::-webkit-scrollbar-thumb {
+  background: #cdd9e3;
+  border: 3px solid #f4f7fb;
+  border-radius: 999px;
+}
+
+/* ------------------------------------------------------------------- Header */
+.pop-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding: 16px 18px;
+  background: var(--pop-grad);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 56, 108, 0.18);
+}
+.pop-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pop-brand-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+}
+.pop-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.pop-brand-text strong {
+  font-size: 15.5px;
+  letter-spacing: 0.2px;
+}
+.pop-brand-text span {
+  font-size: 11.5px;
+  opacity: 0.85;
+}
+
+/* -------------------------------------------------------------------- Intro */
+.pop-intro {
+  margin: 0;
+  padding: 16px 18px 0;
+  font-size: 13px;
+  color: var(--pop-muted);
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------ Actions */
+/* These buttons sit outside .nfpr-settings. That used to mean re-declaring
+   seven --nf-* tokens here so .nfpr-btn resolved to something; tokens.css now
+   declares them on :root, with the same values this block had. */
+.pop-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px 18px 0;
+}
+.pop-actions .nfpr-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  line-height: 1.2;
+}
+.pop-actions .nfpr-btn::before {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: center / contain no-repeat;
+}
+/* "Abrir página de doação" → leaves the extension: external-link glyph, white
+   on the gradient. */
+.pop-actions .nfpr-btn-primary::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpath d='M15 3h6v6M10 14 21 3'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------- Body */
+.pop-root {
+  padding: 16px 18px 4px;
+}
+
+/* ------------------------------------------------------------------- Footer */
+.pop-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 14px 18px 18px;
+  font-size: 11px;
+  color: #9aa7b1;
+  border-top: 1px solid var(--pop-line);
+}

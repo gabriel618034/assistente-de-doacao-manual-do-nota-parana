@@ -1,0 +1,419 @@
+/* modal.css — the settings/help overlay: backdrop, modal shell, header, the
+   two views, the help page, the scan flash and the floating toast.
+   Tokens: src/shared/tokens.css. Kept in lock-step with registrar.css. */
+
+/* ===================================================== Backdrop + modal shell */
+.nfpr-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 22, 38, 0.5);
+  -webkit-backdrop-filter: blur(4px) saturate(115%);
+  backdrop-filter: blur(4px) saturate(115%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+  z-index: 1010;
+}
+.nfpr-backdrop.nfpr-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nfpr-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(780px, calc(100vw - 32px));
+  max-height: min(88vh, 920px);
+  transform: translate(-50%, -47%) scale(0.97);
+  opacity: 0;
+  pointer-events: none;
+  /* NO BACKGROUND OF ITS OWN. The header and .nfpr-views paint every pixel of
+     this box, so a fill here is only ever seen where it should not be: on the
+     antialiased rim of the rounded clip, where white under the dark header
+     gradient bled through as a 1px pale outline (worse on a half-pixel
+     position, which the -50% centring produces). */
+  border-radius: var(--nf-radius);
+  box-shadow: var(--nf-shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1010;
+  /* CLOSED MEANS OUT OF THE TAB ORDER, not merely transparent. Opacity and
+     pointer-events hide the dialog from the eye and the mouse and from nothing
+     else: every control in it stayed a Tab stop, so tabbing through the page
+     walked into an invisible form, and Space on an invisible switch changed a
+     preference nobody could see. `visibility` is what removes them. It waits
+     out the fade on the way down (the delay below) and applies at once on the
+     way up, so the dialog is focusable in the same frame it opens. */
+  visibility: hidden;
+  transition: opacity 0.24s ease, transform 0.24s cubic-bezier(0.2, 0.7, 0.3, 1),
+    visibility 0s linear 0.24s;
+}
+.nfpr-modal.nfpr-on {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.24s ease, transform 0.24s cubic-bezier(0.2, 0.7, 0.3, 1),
+    visibility 0s;
+}
+/* Opening parks the keyboard on the dialog itself (modal.js); a ring round the
+   whole window would say nothing the window does not already say. */
+.nfpr-modal:focus {
+  outline: none;
+}
+
+/* --------------------------------------------------------------- Modal header */
+.nfpr-modal-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--nf-grad-chrome);
+  color: #fff;
+}
+.nfpr-modal-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.nfpr-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 0 0 auto;
+}
+.nfpr-brand-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+}
+.nfpr-brand-title {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+/* 500px, the same step at which host-page.js halves the Celepar mark: the
+   icon alone identifies the overlay, and the title's width is better spent on
+   the page's own heading and controls. */
+@media (max-width: 500px) {
+  .nfpr-brand-title {
+    display: none;
+  }
+}
+
+/* The glassy pill button in the modal chrome (help).
+   THE ENTITY CHIP IS NOT HERE ANY MORE. .nfpr-chip and its three children lived
+   in this file and were rendered only by painel.js, one shadow root away, at a
+   specificity registrar.css could only match — never beat — so which file won
+   came down to load order. The registrar's chip is .nfpr-chip-alvo in
+   registrar.css now and nothing in the modal draws one. */
+.nfpr-help-btn {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.nfpr-help-btn:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+.nfpr-help-btn:active {
+  transform: translateY(1px);
+}
+.nfpr-close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.nfpr-close:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+/* --------------------------------------- Views (modal pages: Config / Ajuda) */
+.nfpr-views {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  background: var(--nf-bg-soft);
+}
+.nfpr-view {
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  flex-direction: column;
+  gap: 14px;
+}
+.nfpr-view-on {
+  display: flex;
+}
+/* The box a mounted page lives in (the settings form, the debug form). It exists
+   so that .nfpr-settings — which declares `display: flex` on whatever container
+   it is given — never lands on .nfpr-view itself and fights it for `display`;
+   see the comment in modal.js. `flex: 0 0 auto` because .nfpr-view is a column
+   flexbox WITH a definite height, so an auto-shrinking child would be squeezed
+   and spill its cards past the padding instead of letting the view scroll. */
+.nfpr-view-corpo {
+  flex: 0 0 auto;
+}
+.nfpr-view::-webkit-scrollbar {
+  width: 11px;
+}
+.nfpr-view::-webkit-scrollbar-thumb {
+  background: #cdd9e3;
+  border: 3px solid var(--nf-bg-soft);
+  border-radius: 999px;
+}
+
+/* ----------------------------------------------- Erros desconhecidos (falhas) --
+   A list of PAPERS, so the digits lead and the reason follows. The key gets the
+   monospace treatment and enough letter-spacing to be checked a group at a time
+   against a printed receipt, which is the only thing this page is for.
+
+   The cards stack in the view's own column gap; the box holding them needs its
+   own, because .nfpr-view-corpo is `flex: 0 0 auto` and not a flexbox itself. */
+.nfpr-falhas-intro {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--nf-ink-soft);
+  line-height: 1.55;
+}
+.nfpr-view-falhas .nfpr-view-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* The one control that empties this record deliberately. Sits AFTER the cards
+   and set apart by a rule, so it reads as an action on the list rather than as
+   part of it — and so the digits are what the volunteer meets first. It is not
+   a dismiss control for the bar: the bar has none, and reaching this at all
+   means the page was opened and read. */
+.nfpr-falhas-rodape {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--nf-line);
+  display: flex;
+  justify-content: flex-end;
+}
+.nfpr-falhas-confirma {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--nf-err-line);
+  border-radius: var(--nf-radius-md);
+  background: var(--nf-err-bg);
+}
+.nfpr-falhas-confirma[hidden] {
+  display: none;
+}
+.nfpr-falhas-confirma-texto {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--nf-ink-soft);
+}
+.nfpr-falhas-confirma-acoes {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+/* The committing half of a two-step, so it is filled rather than an outline:
+   .nfpr-btn-perigo alone only colours the text, which is right for the button
+   that OPENS the confirmation and too quiet for the one that carries it out. */
+.nfpr-btn-perigo:not(.nfpr-btn-ghost) {
+  background: var(--nf-err);
+  border-color: var(--nf-err);
+  color: #fff;
+}
+.nfpr-falha-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--nf-err-line);
+  border-left: 3px solid var(--nf-err);
+  border-radius: var(--nf-radius-md);
+  padding: 11px 14px;
+  background: #fff;
+  box-shadow: var(--nf-shadow-sm);
+}
+.nfpr-falha-chave {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--nf-ink);
+  word-break: break-all;
+}
+.nfpr-falha-em {
+  font-size: 12px;
+  color: var(--nf-ink-soft);
+  opacity: 0.85;
+}
+/* Only on a card the volunteer's bypass sent past our own verdict. Amber, so it
+   reads as the caveat the intro no longer carries for this entry. */
+.nfpr-falha-sem-validacao {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nf-amber);
+  line-height: 1.45;
+}
+.nfpr-falha-msg {
+  font-size: 12.5px;
+  color: var(--nf-ink-soft);
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------ Help view */
+.nfpr-ajuda-card {
+  border: 1px solid var(--nf-line);
+  border-radius: var(--nf-radius-md);
+  padding: 16px;
+  background: #fff;
+  box-shadow: var(--nf-shadow-sm);
+}
+.nfpr-ajuda-card h3 {
+  margin: 0 0 8px;
+  font-size: 14.5px;
+  color: var(--nf-blue);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nfpr-ajuda-card p,
+.nfpr-ajuda-card li {
+  font-size: 13.5px;
+  color: var(--nf-ink-soft);
+  line-height: 1.55;
+}
+.nfpr-ajuda-card ul {
+  margin: 0;
+  padding-left: 6px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.nfpr-ajuda-card li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.nfpr-dot {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+.nfpr-dot-ok {
+  background: var(--nf-ok);
+}
+.nfpr-dot-erro {
+  background: var(--nf-err);
+}
+.nfpr-dot-cinza {
+  background: var(--nf-grey);
+}
+.nfpr-dot-fila {
+  background: var(--nf-blue-600);
+}
+.nfpr-dot-aguardando {
+  background: var(--nf-amber);
+}
+
+/* ------------------------------------------------------ Flash (scan feedback) */
+.nfpr-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(120% 120% at 50% 40%, rgba(90, 194, 237, 0.85), rgba(10, 111, 184, 0.55));
+  opacity: 0;
+  pointer-events: none;
+}
+.nfpr-flash-on {
+  animation: nfpr-flash 0.4s ease;
+}
+@keyframes nfpr-flash {
+  0% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ----------------------------------------------- Modal: pushed page head/back */
+.nfpr-page-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 4px;
+}
+.nfpr-back {
+  appearance: none;
+  border: 1px solid var(--nf-line);
+  background: var(--nf-bg);
+  color: var(--nf-blue-600);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-shadow: var(--nf-shadow-sm);
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.nfpr-back:hover {
+  background: var(--nf-blue-50);
+  transform: translateX(-2px);
+}
+.nfpr-page-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--nf-blue);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nfpr-backdrop,
+  .nfpr-modal,
+  .nfpr-res,
+  .nfpr-cell-atual,
+  .nfpr-close,
+  .nfpr-res-enviando .nfpr-res-dot::after,
+  .nfpr-res-aguardando .nfpr-res-dot,
+  .nfpr-conexao-bar-off,
+  .nfpr-entry-cdv-err,
+  .nfpr-flash-on {
+    transition: none !important;
+    animation: none !important;
+  }
+}

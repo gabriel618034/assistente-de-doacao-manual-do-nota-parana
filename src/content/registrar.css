@@ -1,0 +1,2081 @@
+/* registrar.css — the on-page "Registrar nota fiscal" panel.
+   The everyday surface: the 44-cell key display, the entry box, the results
+   list with its nine state variants, the counters, the connection bar, the
+   entity chip and the condition bars. Tokens: src/shared/tokens.css.
+
+   Design language (v2 — "clear & modern"):
+   • One trustworthy Nota Paraná blue, deepened into a soft gradient for chrome.
+   • Generous radii + layered, low-contrast shadows for calm depth.
+   • The 44-digit key display is the unmistakable focal point: large cells, a
+     glowing live caret, and the box itself lights up while it has focus.
+   • Every state speaks twice — colour AND an icon — so a first-time volunteer
+     never has to guess what happened. */
+
+/* =================================================== Key entry / cell display */
+.nfpr-entry {
+  /* THE CONTAINER THE CELL LADDER MEASURES. The question the cells have is
+     "does a line of 44 fit in the box I am in", and the box is this one: on the
+     live page it is the panel inside the government #container (fixed-width per
+     breakpoint, 758 / 982 / 1200), on the offline page a 980px-capped column.
+     A viewport query answers neither well — the same 1400px window gives this
+     element 1093px there and 871px here — and the ladder below exists purely to
+     keep one line possible, so it has to ask the element that has to hold it.
+
+     THE SIDE PADDING IS ONE NUMBER AT EVERY WIDTH, and a small one. The line of
+     cells is centred, so wherever it is shorter than the box the padding is not
+     what anyone sees — only where the line nearly fills the box does it decide
+     anything, and there every pixel of it is taken from the cells. It was 18px,
+     and then 0 under a viewport query for the 758px #container: a container
+     query cannot style its own container, and that second axis moved the
+     display at 767px as well as 768. 10px is enough for the group highlight
+     (4.5px) and the caret's glow (4px) to stay inside the border. */
+  container-type: inline-size;
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, var(--nf-bg-soft) 100%);
+  border: 1.5px solid var(--nf-line);
+  border-radius: var(--nf-radius-md);
+  padding: 18px 10px;
+  cursor: text;
+  box-shadow: var(--nf-shadow-sm);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.nfpr-entry:hover {
+  border-color: var(--nf-blue-100);
+}
+.nfpr-entry-cdv-err,
+.nfpr-entry-cdv-err:focus-within {
+  border-color: var(--nf-err) !important;
+  box-shadow: 0 0 0 4px rgba(223, 67, 56, 0.16) !important;
+  animation: nfpr-shake 0.4s ease;
+}
+@keyframes nfpr-shake {
+  10%, 90% { transform: translateX(-1px); }
+  30%, 70% { transform: translateX(2px); }
+  50% { transform: translateX(-2px); }
+}
+/* THE CELLS FLOW LIKE TEXT. Eleven groups of four, left-aligned, wrapping only
+   when the line runs out of room — so the display is ONE line at every width
+   that can hold one (see the ladder at the foot of this file) and costs 38px of
+   a panel that is sized to the viewport and never scrolls.
+
+   It used to be three built rows of 4/4/3 groups at every width, 130px of
+   vertical space even on a monitor with room for all 44 side by side. Columns
+   lining up under one another was the reason given, and it is not worth 92px:
+   a wrapped line starts where the line above started, which is what a
+   paragraph does, and the group boxes are what the eye keeps its place by in
+   either arrangement.
+
+   THE BLOCK IS CENTRED; ITS LINES ARE NOT. A wrapped line starts where the
+   line above started — that is what makes it read as text rather than as a
+   broken grid, and centring each line on its own (a short last line floating
+   in the middle) is the one thing to avoid. But pushing the whole block to the
+   left left the first line stuck to one side of a wide box. Flex cannot do
+   both, so this is a GRID: `auto-fit` columns of exactly one group's width,
+   centred as a block by `justify-content`. auto-fit collapses the columns no
+   group occupies, so what gets centred is the width of the first line, and
+   every later line starts in its first column.
+
+   A column is exactly four cells and three inner gaps, and NOTHING ELSE, which
+   takes two declarations to be true. The cell is `box-sizing: border-box`, so
+   --nfpr-cel is its whole width, border included — `all: initial` on :host
+   leaves everything content-box (see the corollary in CLAUDE.md), and an 18px
+   content-box cell was 20px of layout that every formula had to remember. And
+   the group's highlight takes no room at all: its margin is minus its padding
+   plus its border, so the highlight box bleeds past the cells into the gaps.
+   That is why the cell width and the inner gap are variables here: they are
+   the two numbers the column is computed from, and the ladder at the foot of
+   this file changes them in one place.
+
+   THE TWO GAPS ARE NOT THE SAME NUMBER, and the difference is not decorative.
+   The highlight bleeds 4.5px into every gap, so whatever is written here IS the
+   cell-to-cell distance, in both axes, and a highlighted group comes within
+   (gap - 4.5px) of its neighbour's cells. So the column gap is the one that has
+   to stay clear of the 1-2px inside a group, and the row gap is simply the 8px
+   the three built rows used to show. */
+.nfpr-cells {
+  --nfpr-cel: 20px;
+  --nfpr-cel-gap: 2px;
+  /* Resolved on this element, so a tier that changes the two numbers above
+     changes the column with them. */
+  --nfpr-col: calc(4 * var(--nfpr-cel) + 3 * var(--nfpr-cel-gap));
+  display: grid;
+  /* FIXED-WIDTH COLUMNS, SO NOTHING SHRINKS. With flex, the groups squeezed
+     before the line wrapped: the line stayed unbroken at every width by making
+     the cells narrower than any tier of the ladder asks for. A column of a
+     written width cannot do that — the size is the ladder's to decide, and the
+     only thing a line too narrow may do is wrap. auto-fit is only the
+     one-line case; once the line wraps, the ladder writes the column count. */
+  grid-template-columns: repeat(auto-fit, var(--nfpr-col));
+  justify-content: center;
+  align-items: center;
+  gap: 8px 8px;
+}
+.nfpr-cell-group {
+  display: flex;
+  gap: var(--nfpr-cel-gap);
+  padding: 3px;
+  margin: -4.5px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+/* The one landmark bigger than a cell. An eye running along a printed number
+   needs somewhere to come back to, and the blinking caret is a point rather
+   than a place. Nothing else in this display is ever highlighted. */
+.nfpr-cell-group-atual {
+  border-color: var(--nf-blue-100);
+  background: var(--nf-blue-50);
+}
+.nfpr-cell {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--nfpr-cel);
+  height: 38px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--nf-ink);
+  background: #fff;
+  border: 1px solid var(--nf-line);
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+.nfpr-cell-fixo {
+  color: var(--nf-muted);
+  background: var(--nf-grey-bg);
+  border-color: var(--nf-grey-line);
+}
+.nfpr-cell-preenchido {
+  color: #fff;
+  background: var(--nf-grad-cell);
+  border-color: transparent;
+}
+.nfpr-cell-vazio {
+  color: #c2ccd4;
+  background: var(--nf-bg-soft);
+  border-style: dashed;
+  border-color: #d8e0e8;
+}
+.nfpr-cell-vazio::after {
+  content: "·";
+  color: #c6d0d8;
+}
+.nfpr-cell-atual {
+  border-color: var(--nf-blue-600);
+  border-style: solid;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(10, 111, 184, 0.22), 0 2px 6px rgba(10, 111, 184, 0.18);
+  transform: translateY(-1px);
+  animation: nfpr-caret 1.1s ease-in-out infinite;
+}
+@keyframes nfpr-caret {
+  0%, 100% {
+    border-color: var(--nf-blue-600);
+    box-shadow: 0 0 0 3px rgba(10, 111, 184, 0.22), 0 2px 6px rgba(10, 111, 184, 0.18);
+  }
+  50% {
+    border-color: var(--nf-zima);
+    box-shadow: 0 0 0 4px rgba(90, 194, 237, 0.4), 0 2px 8px rgba(10, 111, 184, 0.22);
+  }
+}
+.nfpr-proxy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  left: -9999px;
+}
+
+/* ------------------------------------------------ Blocking notice (no CNPJ) */
+.nfpr-bloqueio {
+  position: relative;
+}
+.nfpr-bloqueio-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 26px 22px;
+  background: linear-gradient(180deg, #fff 0%, var(--nf-blue-50) 100%);
+  border: 1.5px dashed var(--nf-blue-100);
+  border-radius: var(--nf-radius-md);
+  color: var(--nf-blue);
+}
+.nfpr-bloqueio-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--nf-blue-100);
+  font-size: 26px;
+  box-shadow: inset 0 0 0 6px rgba(255, 255, 255, 0.6);
+}
+.nfpr-bloqueio-card p {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--nf-ink-soft);
+  font-size: 14px;
+}
+
+/* ---------------------------------------------------------- Takeover overlay
+   The panel doing ONE thing: covers the whole body — bars, entry, list — for
+   the moment when there is nothing to read and nothing to decide, only
+   something to wait for. Absolute over .nfpr-reg-body, which is already
+   positioned, so it needs no layout of its own and nothing underneath is
+   unbuilt or loses state. */
+.nfpr-takeover {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: var(--nf-bg-soft);
+}
+.nfpr-takeover[hidden] {
+  display: none;
+}
+.nfpr-takeover-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.nfpr-takeover-msg {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--nf-blue);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.nfpr-takeover-detalhe {
+  margin: 0;
+  max-width: 40ch;
+  color: var(--nf-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.nfpr-takeover-giro {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--nf-blue-100);
+  border-top-color: var(--nf-blue-600);
+  animation: nfpr-giro 0.9s linear infinite;
+}
+@keyframes nfpr-giro {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nfpr-takeover-giro {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------- Error toast */
+.nfpr-toast-erro {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  /* width: auto here would shrink-to-fit using only the space from `left: 50%`
+     to the container's right edge (roughly half the container) before the
+     translateX recenters it — width: max-content sizes by content instead, so
+     max-width below is the only real constraint. */
+  width: max-content;
+  max-width: calc(100vw - 72px);
+  padding: 11px 18px;
+  border-radius: 18px;
+  background: var(--nf-err);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(223, 67, 56, 0.38), 0 2px 6px rgba(0,0,0,0.14);
+  pointer-events: auto;
+  animation: nfpr-toast-in 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+  z-index: 10;
+}
+/* The one action a toast ever carries: a red verdict with a fixed part active,
+   whose button drops the fixed part. Never a repair control - the digits are
+   gone, on purpose. */
+.nfpr-toast-erro-acao {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: 4px;
+  padding: 5px 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nfpr-toast-erro-acao:hover {
+  background: #fff;
+  color: var(--nf-err);
+}
+.nfpr-toast-erro::before {
+  content: "";
+  flex: 0 0 auto;
+  margin-top: 1px;
+  width: 18px;
+  height: 18px;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v6M12 16.5v.5'/%3E%3C/svg%3E");
+}
+.nfpr-toast-saindo {
+  animation: nfpr-toast-out 0.3s ease forwards;
+}
+
+/* Floating toast — overlay shadow only. Confirms a save made from the SITE's
+   own entity dialog, which is a light-DOM modal covering the page, so it is
+   fixed rather than positioned inside the registrar panel. The overlay host is
+   fixed at z-index 2147483000 (base.css), which clears the site's stacking. */
+.nfpr-toast-flutuante {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 13px 20px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 12px 30px rgba(8, 26, 44, 0.28), 0 3px 10px rgba(8, 26, 44, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  animation: nfpr-toast-in 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.nfpr-toast-flutuante-ok {
+  background: var(--nf-ok);
+}
+.nfpr-toast-flutuante-err {
+  background: var(--nf-err);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.nfpr-toast-flutuante[hidden] {
+  display: none;
+}
+@keyframes nfpr-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1);    }
+}
+@keyframes nfpr-toast-out {
+  from { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1);    }
+  to   { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.96); }
+}
+/* ================================================================= The strip */
+/* Immediately under the cells: what the next note will be read as, and the
+   control that changes it. It replaced `.nfpr-dica` (an instruction retired for
+   good by the first row — its sentence lives in the empty results list now) and
+   `.nfpr-parte-fixa-info` (a pill that only REPORTED the fixed part). */
+.nfpr-strip {
+  position: relative;
+  flex: 0 0 auto;
+}
+.nfpr-strip-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
+  border: 1.5px solid var(--nf-line);
+  border-radius: var(--nf-radius-md);
+  background: var(--nf-bg-soft);
+}
+.nfpr-strip-rotulo {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border: none;
+  border-radius: var(--nf-radius-sm);
+  background: transparent;
+  color: var(--nf-ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.nfpr-strip-rotulo:hover {
+  background: var(--nf-blue-50);
+  color: var(--nf-blue-600);
+}
+.nfpr-strip-nome {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* WITH NO FIXED PART THE LABEL IS AN INVITATION. The hover state alone was the
+   only thing saying this line could be clicked, which is nothing at all to
+   someone who never hovers it. */
+.nfpr-strip-rotulo-convite {
+  color: var(--nf-blue-600);
+}
+/* THE ONE-CLICK WAY OUT, present only while a fixed part is armed. Bordered
+   like the ▾ beside it so it reads as a control rather than a label, and
+   neutral rather than red: leaving a fixed part is an ordinary thing to do, not
+   a destructive one — the fixed part itself stays in the list. */
+.nfpr-strip-limpar {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1.5px solid var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  background: #fff;
+  color: var(--nf-ink);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nfpr-strip-limpar:hover {
+  border-color: var(--nf-blue-100);
+  color: var(--nf-blue-600);
+}
+/* THE LABEL AND THE COUNTER SHARE ONE BOX, and the counter is taken out of the
+   flow inside it. It arrives on the first digit and leaves with the buffer, and
+   as an ordinary flex item it took its width with it: the volunteer's first
+   keystroke re-laid the whole row out under them, the label truncating mid-word
+   and the two controls sliding along. Reserving a permanent slot for it settled
+   the movement by spending ~80px of the row for good, which is affordable at
+   982px and is not at 400–500 — the widths where the label was already down to
+   its last few characters.
+
+   Positioned instead: the flexible half of the row keeps its full width at
+   every size, and when there is nothing left to give the pill simply draws over
+   the tail of the name. `right: 0` is where the flow put it anyway — hard
+   against `Digitar a chave inteira` — so nothing moved. */
+.nfpr-strip-vaga {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+/* `8ch` is a constant rather than a measurement: the count is at most "44 de
+   44" and the face is monospace, so every glyph is one ch. Anchored by its
+   right edge, a pill that resized would creep leftwards from "9 de 30" to "10
+   de 30"; a fixed box with centred text stays put.
+
+   It never takes a click. It lies over the label, whose whole area opens the
+   editor, and a pill that swallowed that click would make a dead patch of the
+   row appear the moment someone started typing. */
+.nfpr-strip-progresso {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  min-width: 8ch;
+  visibility: hidden;
+  text-align: center;
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nf-blue-600);
+  background: #fff;
+  border: 1px solid var(--nf-blue-100);
+  border-radius: 999px;
+  padding: 2px 9px;
+  /* The name runs UNDER it once the row is tight, so the pill carries a wash of
+     the strip's own background to its left: the text fades out instead of being
+     sliced through a glyph by the pill's border. */
+  box-shadow: -18px 0 11px -2px var(--nf-bg-soft);
+}
+.nfpr-strip-progresso-visivel {
+  visibility: visible;
+}
+/* NAMED, not a bare chevron. It was a 28px square holding nothing but ▾, which
+   says a menu exists and nothing about what is in it; the word does that job.
+   Sized by its content now, so the label can be whatever it needs to be. */
+.nfpr-strip-seta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1.5px solid var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  background: #fff;
+  color: var(--nf-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* The chevron keeps its own box so the flex gap sits between the two and the
+   svg is not stretched by `align-items: center` on a taller text line. */
+.nfpr-strip-seta-icone {
+  display: inline-flex;
+  align-items: center;
+}
+.nfpr-strip-seta:hover {
+  border-color: var(--nf-blue-100);
+  color: var(--nf-blue-600);
+}
+/* THE ▾ GIVES WAY BEFORE THE INVITATION DOES, tail first. "+ Fixar o começo
+   da chave" is what says the line can be used at all, so on a narrow strip
+   the button sheds "parte fixa", then "Escolher", and the invitation keeps
+   its words; its own ellipsis is for widths below even the bare ▾. The `title`
+   on the button names it at every step.
+
+   Measured on the offline page's strip, not added up from the rules above:
+   the invitation is 157px of text, the gap 8px, and the button 141px whole,
+   84px as "Escolher ▾" and 32px as the ▾ alone. Each threshold is the sum
+   plus a few pixels for another platform's font. The row is the container,
+   so a query here asks the strip how wide IT is, whatever bars or panel sit
+   around it. */
+.nfpr-strip-linha {
+  container: nfpr-strip / inline-size;
+}
+@container nfpr-strip (max-width: 314px) {
+  .nfpr-strip-seta-resto {
+    display: none;
+  }
+}
+@container nfpr-strip (max-width: 256px) {
+  .nfpr-strip-seta-texto {
+    display: none;
+  }
+}
+/* WHICH FIXED PART THE FIELD IS ABOUT TO REWRITE. It NEVER SHRINKS: truncating
+   the name would take away the one thing it is there to say, so the row wraps
+   and the field drops to a line of its own instead — which is why the editor
+   row is the one strip line that wraps, and why the field carries a floor. */
+.nfpr-strip-linha-editor {
+  flex-wrap: wrap;
+}
+.nfpr-strip-linha-editor .nfpr-strip-campo {
+  min-width: 15ch;
+}
+.nfpr-strip-legenda {
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nf-muted);
+}
+.nfpr-strip-campo {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1.5px solid var(--nf-blue-100);
+  border-radius: var(--nf-radius-sm);
+  background: #fff;
+  color: var(--nf-ink);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.nfpr-strip-campo:focus {
+  outline: none;
+  border-color: var(--nf-blue-600);
+  box-shadow: 0 0 0 3px rgba(10, 111, 184, 0.18);
+}
+/* ONE line, three sources, a fixed priority — the editor's help, the live
+   verdict, the resting bypass notice. It is text, never a bar: it fires several
+   times per note and must not read as an alarm. */
+.nfpr-strip-status {
+  margin: 6px 2px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 0 0 auto;
+  font-size: 12.5px;
+  color: var(--nf-muted);
+}
+.nfpr-strip-status-err {
+  color: var(--nf-err);
+  font-weight: 600;
+}
+.nfpr-strip-status-aviso {
+  color: var(--nf-amber-ink);
+  font-weight: 600;
+}
+.nfpr-strip-status-msg {
+  flex: 1 1 auto;
+}
+.nfpr-strip-status-acao {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* The refusal half of the fixed part offer, and QUIETER THAN THE ACTION beside
+   it: two identically weighted buttons make the volunteer read both to find out
+   which one is the suggestion. Only `dica` ever fills this slot — a verdict is
+   not dismissible. */
+.nfpr-strip-status-dispensar {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* ---------------------------------------------- The fixed part list popover */
+/* In the REGISTRAR's own shadow root, not the settings overlay, so capture
+   stays live and switching never feels like leaving the work.
+
+   A FIXED FRAME: the header, the filter and the footer are pinned and only the
+   rows scroll. The whole box used to scroll, so on a long list the footer's
+   "+ Nova parte fixa" — the one way to make a fixed part at all — sat a
+   thousand pixels below the fold, and so did "Limpar as nao salvas".
+   `min-height: 0` on the scrolling child is what lets it shrink inside the flex
+   column instead of pushing the footer out. */
+.nfpr-partes-pop {
+  position: absolute;
+  z-index: 12;
+  right: 0;
+  top: calc(100% + 6px);
+  display: flex;
+  flex-direction: column;
+  /* Never wider than the strip it hangs off. `100%` here is the strip, which
+     spans the registrar, so the list can only ever be as wide as the thing it
+     belongs to — anchored to its right edge, a fixed width simply ran off the
+     left of a narrow panel and was clipped. */
+  width: min(520px, 100%);
+  /* REQUIRED, and the same trap `.nfpr-registrar-page` documents. `all:
+     initial` on :host (base.css) resets box-sizing to content-box, and
+     border-box is declared only under `.nfpr-settings` — so the max-height
+     `ajustarAltura` measures against the panel was being applied to the
+     CONTENT box, and the 14px padding top and bottom plus the 1.5px border
+     rendered 31px past the number we computed. The panel is `overflow:
+     hidden`, so those 31px were taken off whichever end was against it: the
+     footer opening downwards, the title opening upwards. */
+  box-sizing: border-box;
+  /* A fallback only, for a surface with no layout to measure. The real
+     ceiling is written inline on open, against the PANEL's box rather than the
+     viewport's, because the panel is `overflow: hidden` and stops above the
+     government footer — see `ajustarAltura` in strip-parte-fixa.js. */
+  max-height: min(66vh, 520px);
+  overflow: hidden;
+  padding: 14px;
+  border: 1.5px solid var(--nf-line);
+  border-radius: var(--nf-radius-md);
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(16, 42, 66, 0.18), 0 2px 8px rgba(16, 42, 66, 0.08);
+}
+/* Opened upwards, when there is more room over the 44 cells than under the
+   strip. Nothing else changes: the footer is still the last child of the same
+   column, and it is the reason the flip exists — clipped off the bottom of the
+   panel it is simply gone, with no scrollbar anywhere to say so. */
+.nfpr-partes-pop-acima {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.nfpr-partes-pop-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+/* THE FILTER, and it is only in the tree at all once there are enough fixed
+   parts to need one. Deliberately quiet — a filled field, no button, no
+   "Buscar" label: it is a way of looking at a list, not an action, and it must
+   not compete with the two real controls in the footer. */
+.nfpr-partes-busca {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  padding: 0 10px;
+  border: 1.5px solid var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  background: var(--nf-bg-soft);
+}
+.nfpr-partes-busca:focus-within {
+  border-color: var(--nf-blue-600);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(10, 111, 184, 0.15);
+}
+.nfpr-partes-busca-icone {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  color: var(--nf-muted);
+}
+.nfpr-partes-busca-campo {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 0;
+  border: none;
+  background: none;
+  color: var(--nf-ink);
+  font-family: inherit;
+  font-size: 13px;
+}
+.nfpr-partes-busca-campo:focus {
+  outline: none;
+}
+/* The only thing that scrolls. */
+.nfpr-partes-lista {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+/* "Chave inteira" is the radio group's zero state and the destination of the
+   commonest correction, so it rides the top of the scroll instead of scrolling
+   away with everything else. An opaque background is not optional on a sticky
+   row — rows would otherwise travel visibly underneath it. */
+.nfpr-partes-item-fixa {
+  position: sticky;
+  top: 0;
+  /* Above 1, not 1: `.nfpr-btn-sm` in settings.css is itself `position:
+     relative; z-index: 1`, so at equal z-index the row actions scrolling past
+     underneath win on DOM order and their two buttons appear straddling this
+     row. */
+  z-index: 2;
+  background: #fff;
+  margin-bottom: 2px;
+}
+.nfpr-partes-item-fixa::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px;
+  height: 1px;
+  background: var(--nf-line);
+}
+.nfpr-partes-item-fixa.nfpr-partes-item-ativo {
+  background: var(--nf-blue-50);
+}
+.nfpr-partes-vazio {
+  margin: 18px 8px;
+  font-size: 12.5px;
+  color: var(--nf-muted);
+  text-align: center;
+}
+.nfpr-partes-pop-titulo {
+  font-size: 14px;
+  color: var(--nf-ink);
+}
+.nfpr-partes-pop-sub {
+  font-size: 12.5px;
+  color: var(--nf-muted);
+  line-height: 1.45;
+}
+.nfpr-partes-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: var(--nf-radius-sm);
+  border: 1.5px solid transparent;
+  /* THE WHOLE ROW CHOOSES, so the whole row says so. The radio is still the
+     control — it keeps the keyboard — but it is a 14px dot beside a two-line
+     block, and the cursor is the only thing that tells an occasional user the
+     rest of the row counts too. */
+  cursor: pointer;
+}
+/* HOVER MUST NOT IMPERSONATE THE SELECTION. A neutral tint, never --nf-blue-50:
+   a row that turns the selected colour under the pointer reads as already
+   chosen, on the one list whose entire job is saying which one is. Excluded on
+   the active row rather than overridden, which also keeps it clear of the
+   sticky "Chave inteira" background at every combination of the two. */
+.nfpr-partes-item:not(.nfpr-partes-item-ativo):hover {
+  background: var(--nf-bg-soft);
+}
+.nfpr-partes-item-ativo {
+  background: var(--nf-blue-50);
+  border-color: var(--nf-blue-100);
+  /* Clicking it again does nothing, on purpose — re-choosing what is chosen
+     would restamp its last use and reorder the list under the pointer. */
+  cursor: default;
+}
+.nfpr-partes-item-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* The rename field sits inside a row that now carries `cursor: pointer`, and a
+   text field under a pointing hand reads as one more thing to click. */
+.nfpr-partes-item .nfpr-input {
+  cursor: text;
+}
+.nfpr-partes-item-linha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.nfpr-partes-item-nome {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nf-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nfpr-partes-item-sub {
+  font-size: 11.5px;
+  color: var(--nf-muted);
+  line-height: 1.4;
+  word-break: break-word;
+}
+/* A named fixed part's own digits, on their own line between the name and the
+   status. They ARE the fixed part, so they read darker and a size up from the
+   muted "você digita · vale até" under them — a different face alone left the
+   two lines looking like one. */
+.nfpr-partes-item-digitos {
+  font-size: 12.5px;
+  color: var(--nf-ink-soft);
+  line-height: 1.4;
+  word-break: break-word;
+}
+/* Narrow screens keep the name alone: beside the row's buttons the text column
+   is too thin for either line, and the row's hover title still shows the whole
+   fixed part. The stale warning stays — it is the one line that asks for
+   something to be done. */
+@media (max-width: 500px) {
+  .nfpr-partes-item-digitos,
+  .nfpr-partes-item-sub:not(.nfpr-partes-item-alerta) {
+    display: none;
+  }
+}
+.nfpr-partes-item-alerta {
+  color: var(--nf-amber-ink);
+  font-weight: 600;
+}
+/* ALWAYS VISIBLE, never hover-only: volunteers move between machines and use
+   this occasionally, which is exactly the person a hidden affordance punishes.
+   They wrap below the name at narrow widths.
+
+   Tighter than the settings form's `.nfpr-btn-sm` they inherit from, and that
+   is a density decision rather than a cosmetic one: every pixel these two take
+   is a pixel the sub-line does not have, and losing it wraps EVERY row onto a
+   second line — which on a list this long is the difference between five rows
+   visible and eight. Still words, never icons, and still always on screen. */
+.nfpr-partes-item-acoes .nfpr-btn-sm {
+  padding: 5px 9px;
+  font-size: 11.5px;
+}
+.nfpr-partes-item-acoes {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.nfpr-partes-pop-pe {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1.5px solid var(--nf-line);
+}
+/* Up to two of them, and the footer is `space-between`: a third loose child
+   would float the middle one into the centre of the bar. They wrap as a unit at
+   the narrow end rather than one of them breaking away from the other. */
+.nfpr-partes-limpezas {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.nfpr-partes-nova,
+.nfpr-partes-limpar {
+  border: none;
+  background: none;
+  padding: 4px 2px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.nfpr-partes-nova {
+  color: var(--nf-blue-600);
+}
+.nfpr-partes-limpar {
+  color: var(--nf-muted);
+  font-weight: 600;
+}
+.nfpr-partes-limpar:hover {
+  color: var(--nf-ink);
+}
+
+.nfpr-spacer {
+  flex: 1 1 auto;
+}
+
+/* ------------------------------------------------------------------ Counters */
+
+
+/* -------------------------------------------------------------- Results list */
+.nfpr-results {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+/* ---- CONDITION BARS: ONE LOOK, ONE HEIGHT ------------------------------
+   Every bar that reports a condition is built from these two rules, and they
+   are shared rather than copied. They used to be six near-copies with their own
+   paddings, font sizes, button metrics and hand-mixed ambers — so the three
+   states the session bar passes through in SEQUENCE each stood at a different
+   height, and the panel jumped while the volunteer was reading it.
+
+   The amber is also ONE amber now. Three of them carried a slightly different
+   mix, one deliberately "louder by a shade" to rank itself above the others;
+   that ranking is gone. A bar earns attention by being on screen at all, and
+   six ambers that nearly match read as a rendering fault, not a hierarchy.
+
+   The FAILURES bar keeps the geometry and takes red instead — the one bar whose
+   notes are out of the queue. See painel.js. */
+.nfpr-parte-fixa-vencida-bar,
+.nfpr-parte-fixa-ignorada-bar,
+.nfpr-sessao-cond-bar,
+.nfpr-entidade-cond-bar,
+.nfpr-servidor-cond-bar,
+.nfpr-falhas-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-radius: var(--nf-radius-sm);
+  border: 1.5px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+}
+.nfpr-parte-fixa-vencida-bar,
+.nfpr-parte-fixa-ignorada-bar,
+.nfpr-sessao-cond-bar,
+.nfpr-entidade-cond-bar,
+.nfpr-servidor-cond-bar {
+  background: var(--nf-amber-bg);
+  border-color: var(--nf-amber-line);
+  color: var(--nf-amber-ink);
+}
+/* NO MARGIN ON ANY OF THEM. Every bar is a child of .nfpr-reg-body, a flex
+   column with its own gap, so a margin here does not replace that gap — it adds
+   to it. One of these carried a margin-bottom of its own, and since consecutive
+   bars are consecutive states of one story, those 6px were a visible jump when
+   one replaced another: the whole panel below shifted. Spacing between bars
+   belongs to the container, not to the bars. */
+/* ONE ACTION BUTTON for all of them, same reason as the bars above: these sit
+   on bars that follow one another, and a button that changes size between two
+   of them moves the bar it is in. --nf-amber is a FILL here, in white, which is
+   the one place it is the right colour. */
+.nfpr-parte-fixa-vencida-acao,
+.nfpr-parte-fixa-ignorada-acao,
+.nfpr-sessao-cond-acao,
+.nfpr-sessao-cond-link,
+.nfpr-entidade-cond-acao,
+.nfpr-falhas-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 10px 22px;
+  border-radius: var(--nf-radius-sm);
+  border: 1.5px solid transparent;
+  background: var(--nf-amber);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(201, 130, 26, 0.25);
+  transition: background 0.15s, box-shadow 0.15s, color 0.15s, opacity 0.15s;
+}
+.nfpr-parte-fixa-vencida-acao:hover,
+.nfpr-parte-fixa-ignorada-acao:hover,
+.nfpr-sessao-cond-acao:hover,
+.nfpr-sessao-cond-link:hover,
+.nfpr-entidade-cond-acao:hover {
+  background: #b3720f;
+  box-shadow: 0 4px 14px rgba(201, 130, 26, 0.35);
+  color: #fff;
+}
+/* THE ACTION IS COMING BUT NOT YET AVAILABLE. Rendered so the bar reserves the
+   space it will occupy: "Encerrando as sessões abertas…" is the same bar that
+   will say "Sua sessão expirou. / Entrar novamente", and hiding the button
+   until then made it grow under the volunteer at the moment they are reading
+   it. Inert on purpose too — following that link while /sair is in flight
+   navigates away and kills the request. */
+.nfpr-acao-inerte,
+.nfpr-acao-inerte:hover {
+  background: transparent;
+  color: var(--nf-amber-ink);
+  border-color: var(--nf-amber-line);
+  box-shadow: none;
+  opacity: 0.55;
+  cursor: default;
+}
+/* ---- Connection status bar --------------------------------------------- */
+.nfpr-conexao-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--nf-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid transparent;
+}
+.nfpr-conexao-bar::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  background: center / contain no-repeat;
+}
+.nfpr-conexao-bar-off {
+  background: var(--nf-amber-bg);
+  border-color: var(--nf-amber-line);
+  color: var(--nf-amber);
+  animation: nfpr-conexao-pulse 2s ease-in-out infinite;
+}
+.nfpr-conexao-bar-off::before {
+  /* wifi-off */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9821a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 3.2-2.1M12 7.5c3 0 5.8 1.2 7.9 3.2'/%3E%3Cpath d='M12 20h.01'/%3E%3C/svg%3E");
+}
+.nfpr-conexao-bar-ok {
+  background: var(--nf-ok-bg);
+  border-color: var(--nf-ok-line);
+  color: var(--nf-ok);
+}
+.nfpr-conexao-bar-neutra {
+  background: var(--nf-bg-soft);
+  border-color: var(--nf-line);
+  color: var(--nf-muted);
+}
+.nfpr-conexao-bar-neutra::before {
+  /* wifi, searching */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235e6e7b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 20h.01'/%3E%3C/svg%3E");
+}
+/* The offline page's way back to the site. Shown only in the 'online' state. */
+.nfpr-conexao-acao {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border-radius: var(--nf-radius-sm);
+  border: 1px solid currentColor;
+  background: var(--nf-bg);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.nfpr-conexao-acao:hover {
+  background: var(--nf-ok);
+  color: #fff;
+}
+.nfpr-conexao-acao:disabled,
+.nfpr-conexao-acao:disabled:hover {
+  background: var(--nf-bg);
+  color: inherit;
+  opacity: 0.6;
+  cursor: progress;
+}
+.nfpr-conexao-bar-ok::before {
+  /* check */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315a05a' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+@keyframes nfpr-conexao-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+.nfpr-conexao-msg {
+  flex: 1;
+}
+
+/* ---- Stale active fixed part --------------------------------------------- */
+/* A condition, not an interruption: amber like the outage bar, but no pulse
+   and no dismiss. It never blocks the entry — scanning still works with a
+   stale fixed part, only typed entry under it is dead — so it is a bar and not
+   a .nfpr-bloqueio. It wraps, because the sentence has to say that much. */
+.nfpr-parte-fixa-vencida-bar::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  background: center / contain no-repeat;
+  /* calendar with a slash */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9821a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4M4 20 20 6'/%3E%3C/svg%3E");
+}
+.nfpr-parte-fixa-vencida-msg,
+.nfpr-parte-fixa-ignorada-msg {
+  flex: 1;
+}
+/* Two actions on one bar, so the secondary has to stop competing: editing is
+   the answer to a fixed part whose month has passed, dropping it is the answer
+   to having moved on to a different batch. */
+.nfpr-parte-fixa-vencida-acao:not(.nfpr-parte-fixa-vencida-acao-primaria) {
+  background: transparent;
+  color: var(--nf-amber-ink);
+  border-color: var(--nf-amber-line);
+  box-shadow: none;
+  padding: 9px 16px;
+  font-size: 14px;
+}
+.nfpr-parte-fixa-vencida-acao:not(.nfpr-parte-fixa-vencida-acao-primaria):hover {
+  background: rgba(201, 130, 26, 0.12);
+  color: var(--nf-amber-ink);
+  box-shadow: none;
+}
+/* The scanner bar's own mark: a barcode, because what happened is that a WHOLE
+   key was read while a fixed part was armed. */
+.nfpr-parte-fixa-ignorada-bar::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  background: center / contain no-repeat;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9821a' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 6v12M8 6v12M12 6v12M16 6v12M20 6v12'/%3E%3C/svg%3E");
+}
+
+/* Debug-mode bar — the stale-fixed-part bar's shape in the danger family, plus
+   the striping, because this one means the list below may be fabricated. */
+.nfpr-debug-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--nf-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nf-err);
+  border: 1.5px solid var(--nf-err-line);
+  background: var(--nf-err-bg)
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 12px,
+      rgba(223, 67, 56, 0.07) 12px 24px
+    );
+}
+.nfpr-debug-bar::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  background: center / contain no-repeat;
+  /* warning triangle */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23df4338' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.3 3.9 1.8 18.2A2 2 0 0 0 3.5 21.2h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z'/%3E%3Cpath d='M12 9v4M12 17h.01'/%3E%3C/svg%3E");
+}
+.nfpr-debug-msg {
+  flex: 1;
+}
+/* "Cuidado!" — the way into the flags form. A button that reads as a link,
+   because the destination is a view in our own overlay, not a page. */
+.nfpr-debug-config {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 800;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 2px;
+}
+.nfpr-debug-config:hover {
+  text-decoration-thickness: 3px;
+}
+.nfpr-debug-config:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* The armed flags, on their own line: short, but the only thing that says
+   WHICH bypasses are live. */
+.nfpr-debug-flags {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.85;
+  word-break: break-word;
+}
+.nfpr-debug-flags:empty {
+  display: none;
+}
+.nfpr-debug-acao {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border-radius: var(--nf-radius-sm);
+  border: 1px solid currentColor;
+  background: var(--nf-bg);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.nfpr-debug-acao:hover {
+  background: var(--nf-err);
+  color: #fff;
+}
+
+/* The debug page inside the modal. These live here rather than in
+   settings.css so every rule the feature owns is deleted in one place. */
+.nfpr-card-perigo {
+  border-color: var(--nf-err-line);
+  background: var(--nf-err-bg);
+}
+.nfpr-card-perigo .nfpr-card-title {
+  color: var(--nf-err);
+}
+.nfpr-card-perigo .nfpr-card-title::before {
+  background: var(--nf-err);
+}
+.nfpr-card-perigo .nfpr-btn-primary {
+  background: var(--nf-err);
+  border-color: var(--nf-err);
+  background-image: none;
+}
+/* The native arrow is the last thing on a select that still looks like the
+   platform's rather than ours, so it is replaced with a chevron drawn the same
+   way .nfpr-valid / .nfpr-invalid draw theirs. No height here: the padding in
+   .nfpr-input sizes it exactly like every other field. */
+select.nfpr-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 38px;
+  cursor: pointer;
+  background: var(--nf-bg)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235e6e7b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center / 16px;
+}
+/* Firefox keeps a focus ring inside the control and tints the selected option
+   text; both fight the field's own focus style. */
+select.nfpr-input:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--nf-ink);
+}
+/* Six preset buttons wrap onto as many rows as they need, and none of them
+   stretches the way a lone primary action does. */
+.nfpr-dbg-casos .nfpr-btn {
+  flex: 0 0 auto;
+}
+/* .nfpr-help reserves a line (min-height) so a validation message appearing
+   under a field does not make the form jump as you type. A status line that
+   only ever APPEARS — nothing above it to jitter — has nothing to reserve, and
+   the empty line is just a hole above whatever follows it. */
+.nfpr-help-status:empty {
+  display: none;
+}
+
+.nfpr-results-empty {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+  color: var(--nf-muted);
+  font-size: 13px;
+  padding: 20px 14px;
+  border: 1.5px dashed var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  background: var(--nf-bg-soft);
+}
+/* ---- Queue indicator -------------------------------------------------------
+   Pending work drawn as an amount. Pips while there is a handful (you can see
+   three notes are left without reading a number), a depleting bar past that. */
+.nfpr-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid var(--nf-line);
+  border-radius: var(--nf-radius-sm);
+  background: var(--nf-bg-soft);
+  font-size: 13px;
+  color: var(--nf-muted);
+}
+.nfpr-fila[hidden] {
+  display: none;
+}
+.nfpr-fila-texto {
+  flex: 0 0 auto;
+  font-weight: 600;
+  color: var(--nf-fg);
+}
+.nfpr-fila-barra {
+  flex: 1 1 auto;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--nf-line);
+  overflow: hidden;
+}
+.nfpr-fila-barra-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  background: var(--nf-accent, #0a6fb8);
+  transition: width 0.25s ease-out;
+}
+
+/* ---- Session bar -----------------------------------------------------------
+   A condition, like the connection and stale-fixed-part bars: no dismiss
+   control, and the notes below it stay amber "guardada" rather than red. */
+.nfpr-sessao-cond-bar[hidden] {
+  display: none;
+}
+.nfpr-sessao-cond-msg {
+  flex: 1 1 auto;
+}
+.nfpr-sessao-cond-acao[hidden],
+.nfpr-sessao-cond-link[hidden] {
+  display: none;
+}
+
+/* ---- Refused-entity bar ----------------------------------------------------
+   The notes underneath are FINE and still queued, so nothing here may read as a
+   failure of theirs — which is what the shared amber above says. It used to be
+   "louder by one shade" than the session bar, on the grounds that its notes
+   cannot proceed until a human decides where they go; the shade was never worth
+   the second palette, and the bar being on screen is the signal. */
+.nfpr-entidade-cond-bar[hidden] {
+  display: none;
+}
+.nfpr-entidade-cond-msg {
+  flex: 1 1 auto;
+}
+
+/* ---- Confused-server bar ----------------------------------------------------
+   The one condition bar with NO action element: the notes are safe, the
+   extension is already retrying, and nothing on this machine can fix someone
+   else's server. So it reserves no room for a button — the only one that
+   deliberately stands shorter than the rest. */
+.nfpr-servidor-cond-bar[hidden] {
+  display: none;
+}
+.nfpr-servidor-cond-msg {
+  flex: 1 1 auto;
+}
+
+/* ---- Notes that were refused ------------------------------------------------
+   THE ONE BAR THAT IS RED, and the only one that should be. The four above it
+   are amber because the notes underneath them are safe and still queued —
+   nothing has been lost and nothing is being asked of the volunteer's hands.
+   This one reports notes that are OUT of the queue, where the only thing that
+   recovers them is finding the paper again. That is exactly what red means
+   everywhere else in this extension: this note is wrong, read the paper again.
+
+   It sits between the queue indicator and the list because all three answer
+   "how is the work going" — above the conditions would put a standing tally
+   over a stopped queue, which is the wrong thing to read first. */
+/* Geometry from the shared rule above; only the colour is its own. */
+.nfpr-falhas-bar {
+  background: var(--nf-err-bg);
+  border-color: var(--nf-err-line);
+  color: #8c2b23;
+}
+.nfpr-falhas-bar[hidden] {
+  display: none;
+}
+.nfpr-falhas-msg {
+  flex: 1 1 auto;
+}
+.nfpr-falhas-acao {
+  background: var(--nf-err);
+  box-shadow: 0 2px 8px rgba(223, 67, 56, 0.25);
+}
+.nfpr-falhas-acao:hover {
+  background: #c0392f;
+  box-shadow: 0 4px 14px rgba(223, 67, 56, 0.35);
+  color: #fff;
+}
+
+.nfpr-res {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--nf-radius-sm);
+  border: 1px solid var(--nf-line);
+  background: #fff;
+  box-shadow: var(--nf-shadow-sm);
+  animation: nfpr-slidein 0.2s ease;
+}
+@keyframes nfpr-slidein {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+.nfpr-res-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--nf-grey);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.nfpr-res-dot::after {
+  content: "";
+  width: 14px;
+  height: 14px;
+  background: center / contain no-repeat;
+}
+.nfpr-res-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.nfpr-res-chave {
+  font-size: 13.5px;
+  letter-spacing: 0.5px;
+  color: var(--nf-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Subtle target marker — only present when the note's frozen target CNPJ
+   differs from the currently active entity. */
+.nfpr-res-cnpj {
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  color: var(--nf-muted);
+  opacity: 0.85;
+  white-space: nowrap;
+}
+/* The active fixed part did not apply to this note. Not an error — the row
+   keeps its own state colour — but it has to be readable at a glance days
+   later. */
+.nfpr-res-parte-fixa-ignorada {
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  color: var(--nf-amber);
+  white-space: nowrap;
+}
+/* Same shape as the fixed-part-override marker, in the danger family: this row
+   got through a gate that exists to stop it (see painel.js). */
+.nfpr-res-forcada {
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  font-weight: 700;
+  color: var(--nf-err);
+  white-space: nowrap;
+}
+/* Same family again, for the volunteer's own bypass. AMBER and not --nf-err,
+   unlike the debug marker above: nothing has refused this note: it is on its
+   way to the server carrying our reading as a warning, and painting it in the
+   danger colour would read as a verdict the row has not received yet. It also
+   WRAPS, alone among the three, because it carries the local reading verbatim
+   and those sentences are whole sentences. */
+.nfpr-res-sem-validacao {
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  color: var(--nf-amber);
+}
+/* The same amber marker, for a repeat the bypass is sending anyway. Amber for
+   the same reason: nothing has refused this note. It wraps like the one above,
+   because when the previous scan carried a verdict this marker quotes it. */
+.nfpr-res-duplicada {
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  color: var(--nf-amber);
+}
+.nfpr-res-status {
+  font-size: 12px;
+  color: var(--nf-muted);
+}
+/* Provenance, not part of the sentence: this row's message came from the site
+   rather than from our own table. Muted hard, and it wears .nfpr-mono for the
+   face rather than restating the stack — settings.css owns that and loads after
+   this sheet, so a copy here would lose to it anyway. The effect: it reads as a
+   label and the eye skips it. A volunteer should never have to parse it, while
+   a maintainer reading a screenshot can tell in one glance which side produced
+   the words. */
+.nfpr-res-fonte {
+  font-size: 10.5px;
+  color: var(--nf-muted);
+  opacity: 0.6;
+}
+.nfpr-res-status .nfpr-res-link,
+.nfpr-res-status .nfpr-res-acao {
+  color: inherit;
+  text-decoration: underline;
+}
+/* A button, because it runs the /sair request in the background instead of
+   navigating — but it reads as the link beside it. */
+.nfpr-res-status .nfpr-res-acao {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.nfpr-res-status .nfpr-res-acao:hover {
+  color: var(--nf-ink);
+}
+
+/* sending */
+.nfpr-res-enviando {
+  background: var(--nf-blue-50);
+  border-color: var(--nf-blue-100);
+}
+.nfpr-res-enviando .nfpr-res-dot {
+  background: var(--nf-blue-600);
+}
+.nfpr-res-enviando .nfpr-res-dot::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M12 3a9 9 0 1 0 9 9'/%3E%3C/svg%3E");
+  animation: nfpr-spin 0.8s linear infinite;
+}
+@keyframes nfpr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* success */
+.nfpr-res-sucesso {
+  background: var(--nf-ok-bg);
+  border-color: var(--nf-ok-line);
+}
+.nfpr-res-sucesso .nfpr-res-dot {
+  background: var(--nf-ok);
+}
+.nfpr-res-sucesso .nfpr-res-dot::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+.nfpr-res-sucesso .nfpr-res-status {
+  color: var(--nf-ok);
+  font-weight: 600;
+}
+/* error */
+.nfpr-res-erro {
+  background: var(--nf-err-bg);
+  border-color: var(--nf-err-line);
+}
+.nfpr-res-erro .nfpr-res-dot {
+  background: var(--nf-err);
+}
+.nfpr-res-erro .nfpr-res-dot::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E");
+}
+.nfpr-res-erro .nfpr-res-status {
+  color: var(--nf-err);
+  font-weight: 600;
+}
+/* duplicate */
+.nfpr-res-duplicado {
+  background: var(--nf-amber-bg);
+  border-color: var(--nf-amber-line);
+}
+.nfpr-res-duplicado .nfpr-res-dot {
+  background: var(--nf-amber);
+}
+.nfpr-res-duplicado .nfpr-res-dot::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V6a1 1 0 0 1 1-1h9'/%3E%3C/svg%3E");
+}
+.nfpr-res-duplicado .nfpr-res-status {
+  color: var(--nf-amber);
+  font-weight: 600;
+}
+/* waiting for the connection to come back (auto-retry) */
+.nfpr-res-aguardando {
+  background: var(--nf-amber-bg);
+  border-color: var(--nf-amber-line);
+}
+.nfpr-res-aguardando .nfpr-res-dot {
+  background: var(--nf-amber);
+  animation: nfpr-conexao-pulse 2s ease-in-out infinite;
+}
+.nfpr-res-aguardando .nfpr-res-dot::after {
+  /* clock */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7.5V12l3 2'/%3E%3C/svg%3E");
+}
+.nfpr-res-aguardando .nfpr-res-status {
+  color: var(--nf-amber);
+  font-weight: 600;
+}
+/* a real note that cannot be donated: past the deadline, another state, or
+   neither an NF-e nor an NFC-e. The reason travels in the message. */
+.nfpr-res-inelegivel {
+  background: var(--nf-grey-bg);
+  border-color: var(--nf-grey-line);
+}
+.nfpr-res-inelegivel .nfpr-res-dot {
+  background: var(--nf-grey);
+}
+.nfpr-res-inelegivel .nfpr-res-dot::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7.5V12l3 2'/%3E%3C/svg%3E");
+}
+.nfpr-res-inelegivel .nfpr-res-status {
+  color: var(--nf-grey);
+  font-weight: 600;
+}
+
+/* ============================================ Registrar panel (page-mounted) */
+.nfpr-registrar-page {
+  display: flex;
+  flex-direction: column;
+  /* REQUIRED, not tidiness. ajustarAltura (painel.js) writes an exact pixel
+     height meant to land this element's bottom on the fold. `all: initial` on
+     :host (base.css) resets box-sizing to content-box, and border-box is
+     declared only under .nfpr-settings — so without this the 1px border top and
+     bottom rendered 2px past the number we computed, and the government page
+     scrolled by exactly that. Two pixels, invisible, and the whole reason the
+     page moved at all. */
+  box-sizing: border-box;
+  border: 1px solid var(--nf-line);
+  border-radius: var(--nf-radius);
+  background: var(--nf-bg);
+  box-shadow: var(--nf-shadow-md);
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+/* ---- THE HEADER STRIP, IN EITHER OF ITS TWO HOMES ------------------------
+   On the offline page it is the panel's own blue strip, exactly as it always
+   was. On the live page ui.js mounts this same element into the government
+   page's #header, which host-page.js has restyled into one 54px bar — so the
+   strip brings no background of its own there and stretches to the bar's
+   height instead.
+
+   IT IS A CONTAINER, and that is what drives everything below. Its width is
+   "the room our half of the header actually got", which on the live page is
+   whatever the logo and the site's user block left over. A viewport media
+   query is a bad proxy for that: their #container is FIXED-width per
+   breakpoint, so 991px of viewport gives us a 758px bar and 992px gives us
+   982px — a 224px jump the viewport number cannot see. Querying the strip
+   itself also means one set of thresholds serves both homes, and that their
+   breakpoints can move without moving ours.
+
+   It is the container in BOTH homes — `container-type` is on the base class,
+   not on the -barra variant — so on the offline page the queries below simply
+   measure the panel's own width, which is the right question there too.
+
+   Every query below is max-width, so each one only ever TAKES SOMETHING AWAY
+   and the default has to be the complete state rather than the collapsed one.
+   Written the other way round — min-width queries adding things back — the
+   uncollapsed bar would exist only where a query matched, which is how their
+   own `#user-name` ended up hidden at every width that actually occurs. */
+.nfpr-reg-head {
+  container-type: inline-size;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 18px;
+  background: var(--nf-grad-chrome);
+  color: #fff;
+}
+.nfpr-reg-head-barra {
+  height: 100%;
+  padding: 0;
+  gap: 12px;
+  /* host-page.js paints the bar; a second gradient over it would seam. */
+  background: none;
+}
+.nfpr-reg-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+}
+/* ---- BACK TO THE SITE ----------------------------------------------------
+   Quieter than the chip — no filled pill — because it is a way OUT of the
+   registrar and must not compete with the one control the volunteer needs. */
+.nfpr-inicio {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.nfpr-inicio:hover {
+  background: rgba(255, 255, 255, 0.18);
+  text-decoration: underline;
+}
+.nfpr-inicio:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.nfpr-inicio-icone {
+  display: flex;
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+/* ---- THE ENTITY CHIP = THE WAY INTO SETTINGS ----------------------------
+   A button, not a label. On the live page it shares a bar with the site's own
+   "Configurações", and two identical labels opening different things is worse
+   than one of them not carrying a label at all — so the gear went onto the
+   thing it configures. See painel.js for the full argument.
+
+   Its own class family rather than the modal's .nfpr-chip, which is now gone
+   from modal.css entirely: that pair existed at equal specificity in two files
+   whose load order broke the tie, and this file had to out-scope it (and give
+   it a calc(100vw - 450px) max-width) to change anything about it. */
+.nfpr-chip-alvo {
+  flex: 0 1 auto;
+  /* Lets the chip shrink past its content so the name ellipsizes instead of
+     forcing the bar wider than the room it was given. */
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 38px;
+  /* More on the right than the left: the icon's side is already light, and
+     text running to the rim of a round-ended pill reads as crowded.
+
+     1em here is the BROWSER'S DEFAULT font size — 16px unless the volunteer
+     changed it — and not the 14.5px base.css declares: ui.js writes
+     `all: initial` inline on every shadow host, and an inline style beats a
+     :host rule, so `font: inherit` reaches the initial `medium`. The site's
+     account pill beside it writes 16px out in host-page.js (its anchor is
+     font-size 0, so an em there is nothing) — keep the two in step. */
+  padding: 0 1em 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.nfpr-chip-alvo:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+.nfpr-chip-alvo:active {
+  transform: translateY(1px);
+}
+.nfpr-chip-alvo:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+/* No entity yet: the chip stops describing a target and becomes the invitation
+   to pick one, so it is ringed rather than flat. Not amber — the blocked card
+   over the entry is already saying this loudly, and two alarms for one missing
+   setting is one too many. */
+.nfpr-chip-alvo-vazio {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.5);
+}
+.nfpr-chip-alvo-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+  /* min-width:0 lets this shrink past its content, which is what makes the
+     name ellipsize instead of widening the bar. Without overflow:hidden the
+     CNPJ — nowrap, and never ellipsized because a half-CNPJ is worse than no
+     CNPJ — simply painted past the chip's right edge. */
+  overflow: hidden;
+}
+.nfpr-chip-alvo-nome {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* No name until the registry gives one (see NFPR.Entidade.salvar), and then
+   the chip is the CNPJ alone rather than a blank line above it. */
+.nfpr-chip-alvo-nome:empty {
+  display: none;
+}
+/* Monospace like the key cells, and like the volunteer's CPF in the site's
+   pill beside it (host-page.js keeps a copy of this stack): a document number
+   is set in it wherever it appears in the bar. */
+.nfpr-chip-alvo-cnpj {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  opacity: 0.82;
+  white-space: nowrap;
+}
+.nfpr-chip-alvo-gear {
+  display: flex;
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+/* WHAT GOES FIRST WHEN THE ROOM RUNS OUT, in order. Each step drops the least
+   informative thing still standing; the gear survives every step, because it
+   is the only door into settings. */
+/* 500px: the home link keeps its house and loses its word. It is the cheapest
+   thing to shrink — a house on its own is read as "home" everywhere. */
+@container (max-width: 500px) {
+  .nfpr-inicio {
+    padding: 0 9px;
+  }
+  .nfpr-inicio-rotulo {
+    display: none;
+  }
+}
+@container (max-width: 250px) {
+  /* The CNPJ outlives the name: it is what the volunteer can check against a
+     receipt, and it is half the width. */
+  .nfpr-chip-alvo-nome {
+    display: none;
+  }
+}
+/* 226px, measured rather than picked: the icon-only Início link and the head's
+   gap (35 + 12) + 28px of chip padding + an 18-character monospace CNPJ + the
+   9px gap + the 17px gear. The CNPJ is 114px in Consolas and ~124px in
+   Cascadia Mono (0.6em against 0.55em), and this is sized for the wider one.
+   Below it the CNPJ cannot be shown WHOLE, and half a CNPJ is not worth a
+   millimetre — so the chip becomes the gear alone.
+
+   It was 170px, which left out the Início link entirely: the CNPJ was clipped
+   at every width from 171 to 197px even before it went monospace. Re-measure
+   by sweeping the head's width, not by adding up the chip alone. */
+@container (max-width: 226px) {
+  .nfpr-chip-alvo-col {
+    display: none;
+  }
+  .nfpr-chip-alvo {
+    padding: 0;
+    width: 38px;
+    justify-content: center;
+  }
+}
+
+.nfpr-reg-body {
+  position: relative;
+  padding: 18px;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--nf-bg-soft);
+  /* Take the slack left by the header. min-height: 0 is what lets the results
+     list below actually shrink instead of forcing the panel taller. */
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.nfpr-reg-body::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 15px;
+  background: linear-gradient(to bottom, transparent, var(--nf-bg-soft));
+  pointer-events: none;
+}
+.nfpr-reg-body .nfpr-results {
+  /* The only element that scrolls. JS sizes the panel; this takes what is left
+     of it, with no measurement per row. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.nfpr-reg-body .nfpr-results::-webkit-scrollbar {
+  width: 9px;
+}
+.nfpr-reg-body .nfpr-results::-webkit-scrollbar-thumb {
+  background: #d2dde6;
+  border: 2px solid var(--nf-bg-soft);
+  border-radius: 999px;
+}
+
+/* ---- THE CELL SIZE LADDER ------------------------------------------------
+   Each step buys one thing: a line of 44 cells that still fits the box, so the
+   display stays ONE line down to the narrowest width where one is worth having.
+
+   With the cells border-box and the highlight outside the layout (see
+   .nfpr-cells), a line of eleven groups with ten gaps is exactly
+
+       44 x cell + 33 x cell-gap + 10 x column-gap
+
+   What the box actually is, measured rather than assumed: the entry's content
+   box is the panel's width less 2px of panel border, 36px of body padding, 3px
+   of entry border and 20px of entry padding — 61px. The panel is the width of
+   the government page's #main, which is #container less its own 30px of
+   padding, and #container is 758 / 982 / 1200 by their own media queries with
+   nothing above 1200 — and 100% of the window below 768. So:
+
+     #container 1200 (and every monitor wider) -> 1109px -> 20px cells = 1026px
+     #container  982 (viewports 992 to 1199)   ->  891px }
+     the 980px offline page                    ->  919px }-> 16px cells =  797px
+     #container  758 (viewports 768 to 991)    ->  667px -> 13px segments = 656px
+     below 768, fluid                   window - 91px  -> 13px, then wraps
+
+   FEW STEPS, EACH ON A LINE THEY ALREADY MOVE. On the live page the box only
+   changes size where the government page does, so every step above lands on
+   one of their breakpoints and adds no movement of its own. Below 768 their
+   page follows the window and so does ours, and from there nothing changes but
+   where the line breaks — see the wrap below.
+
+   The queries measure .nfpr-entry rather than the window for the reason given
+   on it: the same 1400px window hands this element 1109px on the live page and
+   919px on the offline one. */
+@container (max-width: 1025px) {
+  .nfpr-cells {
+    --nfpr-cel: 16px;
+    --nfpr-cel-gap: 1px;
+    gap: 8px 6px;
+  }
+  .nfpr-cell {
+    height: 32px;
+    font-size: 15px;
+  }
+}
+/* THE SMALLEST CELL, AND THE LAST SIZE CHANGE — AND HERE A GROUP IS ONE
+   SEGMENT. 13px is the widest cell that fits the 667px box of the 758px
+   #container (a line of 14px ones is 709), and 44 separate 13px boxes read as
+   slivers however tall they are. So at this size the four cells of a group
+   touch: no gap between them, square inside, rounded only at the group's two
+   ends. The eye then meets eleven 56px blocks, which is how the key is printed
+   on the paper, and the narrowness of each character stops showing.
+
+   What changes with it, all of it confined to this tier:
+   • The inner gap is 0, and the first and last cell of a segment are two
+     pixels wider, those pixels being padding on the OUTER side: every
+     character keeps its 11px and its distance to its neighbour, and the two
+     end ones stand clear of the rounded edge, which crowded them. A column is
+     4 x 13 + 4 = 56px — and --nfpr-col has to say so: a wider cell under the
+     old column spills past it into the gap, which looks like a narrower gap
+     and leaves the block off-centre. The gap between groups is 4px, and a line
+     is 11 x 56 + 10 x 4 = 656px; at 6px it would be 676 and wrap in the
+     667px box. The row gap stays 6px.
+   • The group highlight's padding is 2px here rather than 3, so it bleeds
+     3.5px (padding + border) into a 4px gap and stays half a pixel clear of
+     the next segment.
+   • An empty cell is a flat slot, not a dashed box. Twenty-odd dashed outlines
+     at this size were most of what the eye saw; an empty group is now a grey
+     bar with four dots, and the dots are what count the positions. The slot is
+     --nf-line rather than --nf-grey-bg, which is too close to the entry's own
+     background to read as a shape.
+   • Borders inside a segment are transparent in every state, so nothing draws
+     a double line where two cells meet. The caret keeps its own, restated
+     here because the transparent rule comes later than its base one — its
+     keyframes would outrank either, but under reduced motion (modal.css)
+     there are no keyframes. It gets its own 4px corners so it reads as a
+     cursor inside the segment rather than a piece of it.
+   • 28px tall rather than 32, since 13px wide under 32 was the sliver. */
+@container (max-width: 796px) {
+  .nfpr-cells {
+    --nfpr-cel: 13px;
+    --nfpr-cel-gap: 0px;
+    --nfpr-col: calc(4 * var(--nfpr-cel) + 4px);
+    gap: 6px 4px;
+  }
+  .nfpr-cell-group {
+    padding: 2px;
+    margin: -3.5px;
+  }
+  .nfpr-cell {
+    height: 28px;
+    border-radius: 0;
+    border-color: transparent;
+    border-style: solid;
+  }
+  .nfpr-cell:first-child,
+  .nfpr-cell:last-child {
+    width: calc(var(--nfpr-cel) + 2px);
+  }
+  .nfpr-cell:first-child {
+    padding-left: 2px;
+    border-radius: 5px 0 0 5px;
+  }
+  .nfpr-cell:last-child {
+    padding-right: 2px;
+    border-radius: 0 5px 5px 0;
+  }
+  .nfpr-cell-vazio {
+    background: var(--nf-line);
+  }
+  .nfpr-cell-vazio::after {
+    color: #a9b6c2;
+  }
+  .nfpr-cells .nfpr-cell-atual {
+    border-color: var(--nf-blue-600);
+    border-radius: 4px;
+  }
+}
+
+/* ---- ONCE IT WRAPS, IT WRAPS EVENLY, AND ONLY WRAPS ------------------------
+   auto-fit takes as many columns as the line holds and leaves the remainder
+   for the next one, so a narrowing window walked through 10 + 1, 9 + 2, 8 + 3
+   and 5 + 5 + 1 — a stub of a line holding the last few groups, which is
+   exactly where the eye is when the key is nearly typed.
+
+   Eleven groups split evenly only five ways: 11, 6 + 5, 4 + 4 + 3,
+   3 + 3 + 3 + 2 and 2 + 2 + 2 + 2 + 2 + 1. So below one line the count is
+   WRITTEN, and only those counts are allowed; each tier holds from the width
+   its count needs (N segments of 56px with N - 1 gaps of 4px, the tier above)
+   down to the next.
+
+     11 -> 656px (above)   6 -> 356px   4 -> 236px   3 -> 176px   2 -> below
+
+   The cells DO NOT GROW BACK when the line breaks. There would be room for
+   bigger ones on two lines, and it was tried: the break then moved every cell
+   in the display at once, on top of moving half of them to a new line. Staying
+   the size they were leaves the break as the one thing that happens. */
+@container (max-width: 655px) {
+  .nfpr-cells {
+    grid-template-columns: repeat(6, var(--nfpr-col));
+  }
+}
+@container (max-width: 355px) {
+  .nfpr-cells {
+    grid-template-columns: repeat(4, var(--nfpr-col));
+  }
+}
+@container (max-width: 235px) {
+  .nfpr-cells {
+    grid-template-columns: repeat(3, var(--nfpr-col));
+  }
+}
+@container (max-width: 175px) {
+  .nfpr-cells {
+    grid-template-columns: repeat(2, var(--nfpr-col));
+  }
+}
