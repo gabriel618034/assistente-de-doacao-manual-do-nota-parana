@@ -3,5 +3,5 @@
 # Not our code, not for distribution — see CLAUDE.md "Reference material".
 /reference/
 
-# Store packages written by tools/empacotar.js — derived, never committed.
+# Store packages written by tools/empacotar.js, and the embedded build written by tools/embutir.js — derived, never committed.
 /dist/

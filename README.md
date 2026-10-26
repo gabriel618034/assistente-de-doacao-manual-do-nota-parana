@@ -126,7 +126,16 @@ confere a carga dos módulos e a lógica sem abrir o navegador, e
 node tools/empacotar.js
 ```
 
-gera em `dist/` um pacote para cada loja.
+gera em `dist/` um pacote para cada loja. Já
+
+```bash
+node tools/embutir.js
+```
+
+gera `dist/assistente-nfpr-<versão>.js`, um arquivo só para rodar o assistente
+dentro da própria página de doação, sem a extensão. O arquivo sai sem os
+comentários do código; com `--comentado`, sai
+`dist/assistente-nfpr-<versão>-comentado.js`, com eles.
 
 A pasta `reference/` não vem no repositório. Ela é uma cópia local das páginas
 do site, que cada pessoa salva com o próprio login; o final de

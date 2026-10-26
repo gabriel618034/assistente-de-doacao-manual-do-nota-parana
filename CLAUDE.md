@@ -257,6 +257,19 @@ mode is inert until armed.
 > packaging step, **not a build step**: development and testing must keep
 > working from the unpacked folder as if it did not exist. The list of
 > per-browser differences lives in that script and nowhere else.
+>
+> `node tools/embutir.js` is the same kind of step for the official site: it
+> writes `dist/assistente-nfpr-<version>.js`, one plain script that runs the
+> donation page's modules in manifest order over a local stand-in for
+> `storage.local`, `storage.onChanged` and `runtime.getURL` (localStorage, with
+> the stylesheets inside it as `data:` URLs, and every icon answered with a
+> small inline SVG in place of the extension's art). It reads its file list
+> from `manifest.json`, so a module added there is carried with no edit here.
+> Its output carries no comments, stripped by a small lexer in that script (a
+> source file that trips it fails the build by name); `--comentado` writes a
+> `-comentado` variant with the source verbatim. The tag goes last in
+> `<head>`, without `defer`; why, and what it leaves out, is in DOCS.md under
+> *Embedded in the official page*.
 
 ## Architecture
 

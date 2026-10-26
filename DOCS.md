@@ -189,6 +189,62 @@ validator warns that `strict_min_version` is below 140. The warning does not
 block submission, and with nothing collected there is no consent screen for
 the older versions to lack.
 
+### Embedded in the official page
+
+```
+node tools/embutir.js
+```
+
+writes `dist/assistente-nfpr-<versão>.js`: one plain script that runs the
+registrar inside the donation page itself, with no extension installed. It is
+for the day the site carries the assistant natively, and like the store packages
+it is derived from this folder rather than a second copy of anything.
+
+**It carries no comments.** They are stripped from the modules and stylesheets
+(about 300 KiB against 770, and 66 KiB gzipped against 244); code and line
+structure are otherwise untouched, and the per-file banners stay.
+`node tools/embutir.js --comentado` writes
+`dist/assistente-nfpr-<versão>-comentado.js` instead, with the source verbatim.
+The stripper is a small lexer that knows strings, template literals and
+regular expressions, and each stripped module is compiled on its own before
+anything is written. It was checked once by running `tools/smoke.js` over a
+stripped copy of `src/`: all 723 assertions passed (2026-10-26).
+
+The site adds **one tag, the last one inside `<head>`, with neither `defer` nor
+`async`**, and
+sends it as UTF-8 (`charset="utf-8"` on the tag, or the header). The page is
+windows-1252, and our strings decoded as that come out garbled.
+
+- **Where the tag sits is the timing.** `host-page.js` runs at once, which in
+  `<head>` is still before `#main` and `#header` paint. Everything else waits for
+  `DOMContentLoaded`, and being last in `<head>` puts that listener behind
+  jQuery's, so the site's own `$(document).ready` handlers run first, as they do
+  under the extension.
+- **Storage is `localStorage`**, behind a stand-in for the three extension APIs
+  the page code uses (`storage.local`, `storage.onChanged`, `runtime.getURL`).
+  It is local to the script, so `window.chrome` is untouched, and `clear()` only
+  removes `nfpr:` keys. Another tab's writes arrive through the `storage` event.
+  A queue in the extension's `chrome.storage` does **not** carry over.
+- **The stylesheets are inside the file** and are served as `data:` URLs. A page
+  Content-Security-Policy that refuses `data:` for `connect-src` has to allow it.
+- **The icons are not.** They are the extension's own toolbar art, so every
+  `.png` the page code asks for gets a small inline SVG instead (a blue sky
+  over a green hill with a yellow rim), and the output stays one file. A page
+  CSP that refuses `data:` for `img-src` has to allow it too.
+- **Each module is wrapped in its own `try`/`catch`**, so one failing at load does
+  not stop the ones after it, the way separate content scripts behave. The
+  console names the file.
+- **Not carried:** the `ContaCorrente` bounce-back, the offline page and
+  redirect, the toolbar badge and the popup. Configuration is reachable from the
+  entity chip as always.
+- **With the extension also installed, both would mount.** Retire the
+  extension, or ship one that stands down on an embedding page, before the site
+  goes live.
+
+The output was loaded into the saved copy of the donation page under
+`reference/` and mounted there, merged header included (2026-10-26). It has not
+been run on the live site.
+
 ### Checking a change
 
 Verification is manual — see the [checklist](#manual-test-checklist). One thing
